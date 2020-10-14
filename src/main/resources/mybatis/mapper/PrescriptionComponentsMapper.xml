@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jyc.prescriptionhistory.mapper.PrescriptionComponentsMapper">
+    <select id="getComponentsByPresId" resultType="com.jyc.prescriptionhistory.bean.PrescriptionComponents">
+        SELECT * FROM prescription_components WHERE pres_id=#{presId}
+    </select>
+    <insert id="addComponents" useGeneratedKeys="true" keyProperty="plantId">
+        INSERT INTO prescription_components(plant_name,pres_id) VALUES(#{plantName},#{presId})
+    </insert>
+    <insert id="addComponentsBatch" useGeneratedKeys="true" keyProperty="plantId">
+        INERT INTO prescription_components(plant_name,pres_id)
+        VALUES
+        <foreach collection="components" separator="," item="comp">
+            (#{comp.plantName},#{comp.presId})
+        </foreach>
+    </insert>
+
+</mapper>

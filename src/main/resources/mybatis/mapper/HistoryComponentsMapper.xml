@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jyc.prescriptionhistory.mapper.HistoryComponentsMapper">
+    <insert id="addInitHistoryComponent">
+        INSERT INTO prescription_history_components(plant_id,content,history_id) values(#{pc.plantId},0,#{ph.historyId})
+    </insert>
+    <select id="getHisComponentsByHid" resultType="com.jyc.prescriptionhistory.bean.HistoryComponents">
+        SELECT a.plant_id,plant_name,content FROM prescription_history_components a,prescription_components b WHERE history_id=#{historyId} AND a.plant_id=b.plant_id
+    </select>
+    <update id="updateHisComponents">
+        UPDATE prescription_history_components SET content=#{content} WHERE plant_id=#{plantId} AND history_id=#{historyId}
+    </update>
+    <insert id="addHistoryComponent">
+        INSERT INTO prescription_history_components(plant_id,content,history_id) values(#{plantId},#{content},#{historyId})
+    </insert>
+    <insert id="addInitHistoryComponentBatch">
+        INSERT INTO prescription_history_components(plant_id,content,history_id)
+        values
+        <foreach collection="historyIds" item="hid" separator=",">
+            (#{plantId},0,#{hid})
+        </foreach>
+    </insert>
+
+</mapper>

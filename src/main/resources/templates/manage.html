@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>方剂管理</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/webjars/bootstrap-table/1.15.5/bootstrap-table.css">
+    <link rel="stylesheet" href="/css/manage.css">
+    <script src="/js/jquery-1.12.4.js"></script>
+    <script src="/webjars/popper.js/1.13.0/dist/umd/popper.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/webjars/jquery-confirm/2.7.0/jquery.confirm.js"></script>
+    <script src="/webjars/bootstrap-table/1.15.5/bootstrap-table.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            //bootstrapTable生成表格
+            let presHistoryComp=[];
+            let editingHid=null;
+            let $table=$("#manage_table");
+            let $addBtn=$(".add");
+            let $delBtn=$(".del");
+            let url='/prescriptionHistoryInfo/'+${presId};
+            //删除操作
+            $delBtn.click(function () {
+                let del=$table.bootstrapTable('getAllSelections');
+                if(del.length!=0) {
+                    $.confirm({
+                        text: "请确认是否删除选择的方剂信息？",
+                        confirm: function (button) {
+                            delPresHistory(del);
+                        },
+                        cancel: function (button) {
+                            alert("删除操作已取消");
+                        }
+                    });
+                }
+
+            });
+
+            //删除方剂历史信息
+            function delPresHistory(del){
+
+                console.log(del);
+                $.ajax({
+                    url:'/prescriptionsHistory',
+                    type:'DELETE',
+                    contentType:'application/json',
+                    data:JSON.stringify(del),
+                    success: function(res) {
+                        alert("删除成功");
+                        $table.bootstrapTable('refresh');
+                    }
+                });
+            }
+            $addBtn.click(function () {
+                $("#addPresHistory").modal({
+                    keyboard:false
+                });
+            });
+
+            $table.bootstrapTable({
+                url:url,
+                // data:[],
+                toolbar:'#toolbar',
+                toolbarAlign: 'left',
+                pagination:true,
+                clickToSelect:true,
+                clickEdit:true,
+                pageSize:20,
+                pageList:[10,15,20],
+                uniqueId:'historyId',
+                // pagination:true,
+                search:true,
+                columns: [{
+                        checkbox: true,
+                    },
+                    {
+                        field:'historyId',
+                        visible:false
+                    },
+                    {
+                        field: 'bookName',
+                        title: ' 古籍名称',
+                        halign:'center',
+                        align:'center',
+                        width:200
+                    },
+                    {
+                        field: 'composition',
+                        title: '成分',
+                        halign:'center',
+                        align:'center',
+                        events:{
+                            'click .editComponent': function (e, value, row, index) {
+                                getPresHisComponents(row.historyId);
+                                editingHid=row.historyId;
+                            },
+                        },
+                        formatter:function () {
+                            return '<a href="javascript:;" class="editComponent">编辑组成</a>';
+                        },
+                        width:100
+                    },
+                    {
+                        field: 'useWay',
+                        title: '剂量',
+                        halign:'center'
+                    },
+                    {
+                        field: 'effects',
+                        title: '功效',
+                        halign:'center'
+                    },
+                    {
+                        field: 'indication',
+                        title: '适应症',
+                        halign:'center',
+                        width:300
+                    },
+                    {
+                        field:'age',
+                        title:'年代',
+                        halign:'center',
+                        formatter:ageSelect,
+                        events:{
+                            'change .ageSelect': function (e, value, row, index) {
+                                let optionId='age_'+row.historyId;
+                                let newVal=$('#' + optionId).val();
+                                console.log(e);
+                                $.confirm({
+                                    text: "请确认是否修改方剂信息？",
+                                    confirm: function(button) {
+                                        saveData(index, 'age', newVal,row);
+                                    },
+                                    cancel: function(button) {
+                                        alert("修改操作已取消");
+                                    }
+                                });
+                            }
+                        }
+                    }
+                ],
+                onClickCell: function(field, value, row, $element) {
+                    if(field!='composition'){
+                        let preValue=$element.html();
+                        $element.attr('contenteditable', true);
+                        $element.blur(function() {
+                            let index = $element.parent().data('index');
+                            let tdValue = $element.html();
+                            if(preValue!=tdValue){
+                                $.confirm({
+                                    text: "请确认是否修改方剂信息？",
+                                    confirm: function(button) {
+                                        saveData(index, field, tdValue,row);
+                                    },
+                                    cancel: function(button) {
+                                        alert("修改操作已取消");
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+            //表格中年代列的下拉框
+            function ageSelect(value,row,index) {
+                let AGE=['汉','唐','金','宋','元','明','清','现代','朝鲜'];
+                let select='<select id="age_'+row.historyId+'" class="form-control ageSelect">';
+                for (let i = 0; i < AGE.length; i++) {
+                    if(value==AGE[i])
+                        select+='<option value='+AGE[i]+' selected>'+AGE[i]+'</option>';
+                    else
+                        select+='<option value='+AGE[i]+'>'+AGE[i]+'</option>';
+                }
+                select+='</select>';
+                return select
+            }
+
+            //修改方剂历史信息
+            function saveData(index, field, value,row) {
+                $table.bootstrapTable('updateCell', {
+                    index: index,       //行索引
+                    field: field,       //列名
+                    value: value        //cell值
+                });
+                let updatePresHistory=getUpdatePresHistory(row);
+                $.ajax({
+                    url:'/prescriptionHistory/'+updatePresHistory.historyId,
+                    type:'PUT',
+                    contentType:'application/json',
+                    data:JSON.stringify(updatePresHistory),
+                    success: function(res) {
+                        $table.bootstrapTable('refresh');
+                    }
+                });
+            }
+
+            function getUpdatePresHistory(row){
+                let up={
+                    historyId:row.historyId,
+                    bookName:row.bookName,
+                    useWay:row.useWay,
+                    effects:row.effects,
+                    indication:row.indication,
+                    age:row.age
+                }
+                return up;
+            }
+            //控制模态框
+            $(".manage").delegate(".editComponent","click",function () {
+                $("#editComponent").modal({
+                    keyboard:false
+                });
+            });
+            //可编辑下拉列表(成分名称下拉列表)
+            $(".component_list").delegate(".component_name_select","change",function () {
+                $(this).parent().find(".component_name_input").val($(this).find("option:selected").text());
+            });
+            //添加成分
+            $(".add_component").click(function () {
+                $(".component_name_select").html("");
+                let newComp="               <li>\n" +
+                    "                            <div class=\"component_name\">\n" +
+                    "                                    <span>成分名称</span>\n" +
+                    "                                    <input type=\"text\" class=\"component_name_input\" placeholder='成分名'>\n" +
+                    "                            </div>\n" +
+                    "                            <div class=\"component_num\">\n" +
+                    "                                <span>含量</span>\n" +
+                    "                                <input type=\"text\" class=\"component_num_input\" value='0'>\n" +
+                    "                                <span>g</span>\n" +
+                    "                            </div>\n" +
+                    "                        </li>";
+                $(this).parents(".modal-body").children(".component_list").prepend(newComp);
+            });
+
+            //根据方剂名获取成分
+            function getPresHisComponents(hid){
+                $.ajax({
+                    url:"/components?historyId="+hid,
+                    type:"GET",
+                    success:function(data){
+                        $(".component_name_select").html("");
+                        console.log(data);
+                        createComponentList(data);
+                        $("#editComponent").modal({
+                            keyboard:false
+                        });
+                    }
+
+                });
+            }
+
+            function createComponentList(data) {
+                $(".component_list").html("");
+                for(let c of data){
+                    let comp="               <li>\n" +
+                        "                            <div class=\"component_name\">\n" +
+                        "                                    <span>成分名称</span>\n" +
+                        "                                    <input type=\"text\" pid='"+c.plantId+"'class=\"component_name_input\" value='"+c.plantName+"' disabled>\n" +
+                        "                            </div>\n" +
+                        "                            <div class=\"component_num\">\n" +
+                        "                                <span>含量</span>\n" +
+                        "                                <input type=\"text\" class=\"component_num_input\" value='"+c.content+"'>\n" +
+                        "                                <span>g</span>\n" +
+                        "                            </div>\n" +
+                        "                        </li>";
+                    $(".component_list").append(comp);
+                }
+            }
+            // $("#add_presName").blur(function(){
+            //     let name=$(this).val();
+            //     if(name!=""){
+            //
+            //     }
+            // });
+
+            //根据成分设置下拉列表
+            function updateSelect() {
+                for(let c of presHistoryComp){
+                    let op='<option value ='+c.plantName+'>'+c.plantName+'</option>'
+                    $(".component_name_select").append(op);
+                }
+            }
+
+            //添加方剂事件
+            $("#addPresHistory_btn").click(function () {
+                if(notNull()) {
+                    let ph = getNewPresHistoryInfo();
+                    $.confirm({
+                        text: "请确认是否添加方剂历史信息？",
+                        confirm: function (button) {
+                            addNewPreHistoryInfo(ph);
+                            $("#add_bookName").val('');
+                            $("#add_useWay").val('');
+                            $("#add_effects").val('');
+                            $("#add_indication").val('');
+                        },
+                        cancel: function (button) {
+                            alert("添加操作已取消");
+                        }
+                    });
+                }
+
+
+            });
+            function addNewPreHistoryInfo(ph) {
+                $.ajax({
+                    url:'/prescriptionHistory',
+                    type:'POST',
+                    contentType:'application/json',
+                    data:JSON.stringify(ph),
+                    success: function(res) {
+                        alert("添加成功，请您编辑方剂组成")
+                        $table.bootstrapTable('refresh');
+                        $("#addPresHistory").modal('hide');
+                        getPresHisComponents(res);
+                        editingHid=res;
+
+                        // console.log(res)
+                    }
+                });
+            }
+
+            function getNewPresHistoryInfo() {
+                let book=$("#add_bookName").val();
+                let useWay=$("#add_useWay").val();
+                let effects=$("#add_effects").val();
+                let indication=$("#add_indication").val();
+                let age=$("#add_age").val();
+                let prescriptionHistory= {
+                    presName: "${presName}",
+                    presId:${presId},
+                    bookName: book,
+                    useWay: useWay,
+                    effects: effects,
+                    indication: indication,
+                    age:age
+                }
+                console.log(prescriptionHistory);
+                return prescriptionHistory;
+            }
+
+
+            //修改成分
+            $("#updateHisComps_btn").click(function(){
+                    let comps=getCompListInfo();
+                    if(comps.length!=0){
+                        updateComps(comps);
+                    }
+
+
+            });
+
+            function updateComps(comps) {
+                $.ajax({
+                    url:'/HistoryComponents/'+editingHid,
+                    type:'PUT',
+                    contentType:'application/json',
+                    data:JSON.stringify(comps),
+                    success: function(res) {
+                        alert("修改成功");
+                        $("#editComponent").modal('hide');
+
+                        // console.log(res)
+                    }
+                });
+            }
+            //含量数字校验
+            function isNumber(value) {         //验证是否为数字
+                let patrn = /^(-)?\d+(\.\d+)?$/;
+                if (patrn.exec(value) == null || value == "") {
+                    return false;
+                } else {
+                    let num=patrn.exec(value)[0];
+                    if(num>=0&&num<=999999)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            //获取成分列表信息
+            function getCompListInfo(){
+                let comps=[];
+                $(".component_list li").each(function () {
+                    let name=$(this).find(".component_name_input").val();
+                    let pid=$(this).find(".component_name_input").attr("pid");
+                    let content=$(this).find(".component_num_input").val();
+                    if(!isNumber(content)){
+                        alert("含量必须为0~1000000间的数字！");
+                        comps=[];
+                        return false;
+                    }
+                    let comp={
+                        plantId:pid,
+                        plantName:name,
+                        content:content,
+                        historyId:editingHid
+                    }
+                    comps.push(comp);
+                });
+                return comps;
+            }
+            //校验添加信息不能为空
+            function notNull() {
+                let flag=true;
+                $(".tip").remove();
+                $(".notNull").each(function () {
+                    if($(this).val()==''){
+                        let type=$(this).attr('placeholder');
+                        let html='<p style="color: red" class="tip">'+type+'不能为空</p>';
+                        $(this).after(html);
+                        flag=false;
+                    }
+                });
+                return flag;
+            }
+
+            $(".close").click(function () {
+                $(this).parents(".modal-content").find(".component_list").html("");
+            })
+        });
+
+    </script>
+
+
+
+</head>
+<body>
+    <div class="top">
+        <div class="welcome_text">
+            <a href="/manage_index.html" id="back">&lt;返回</a>
+            <span>${Session.loginUser}，欢迎来到中药方剂信息管理平台</span>
+        </div>
+        <div class="nav">
+            <span class="title">方剂历史衍化信息平台</span>
+        </div>
+    </div>
+    <div class="manage">
+        <div id="toolbar">
+            <a href="javascript:;" class="add">+</a>
+            <a href="javascript:;" class="del">-</a>
+        </div>
+        <h3 id="pres_name">方剂名:${presName}</h3>
+        <table id="manage_table" style="table-layout:fixed;"></table>
+    </div>
+    <div class="modal fade" id="editComponent" tabindex="-1" role="dialog" aria-labelledby="修改成分" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">
+                        成分
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body editComponent_main">
+                    <div id="addComponent">
+                        <a href="javascript:;" class="add_component">+</a>
+                    </div>
+                    <ul class="component_list">
+
+                    </ul>
+                </div>
+                <div class="modal-footer">
+<!--                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭-->
+<!--                    </button>-->
+                    <button type="button" class="btn btn-primary" id="updateHisComps_btn">
+                        提交更改
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <div class="modal fade" id="addPresHistory" tabindex="-1" role="dialog" aria-labelledby="添加方剂" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="addModalLabel">
+                        添加方剂
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" class="close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body addPresHistory_main">
+                    <input type="text" id="add_bookName" class="form-control notNull" placeholder="出处">
+                    <textarea id="add_useWay" class="form-control" placeholder="用法"></textarea>
+                    <textarea id="add_effects" class="form-control" placeholder="功效"></textarea>
+                    <textarea id="add_indication" class="form-control" placeholder="适应症"></textarea>
+                    <select id="add_age" class="form-control">
+                        <option value="汉" selected>汉</option>
+                        <option value="唐">唐</option>
+                        <option value="金">金</option>
+                        <option value="宋">宋</option>
+                        <option value="元">元</option>
+                        <option value="明">明</option>
+                        <option value="清">清</option>
+                        <option value="现代">现代</option>
+                        <option value="朝鲜">朝鲜</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+<!--                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭-->
+<!--                    </button>-->
+                    <button type="button" class="btn btn-primary" id="addPresHistory_btn">
+                        添加
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jyc.prescriptionhistory.mapper.PrescriptionMapper">
+    <select id="getPrescriptions" resultType="com.jyc.prescriptionhistory.bean.Prescription">
+        SELECT * FROM prescription WHERE pres_name LIKE CONCAT('%',#{keywords},'%')
+            OR  use_way LIKE CONCAT('%',#{keywords},'%')
+            OR  effects LIKE CONCAT('%',#{keywords},'%')
+            OR indications LIKE CONCAT('%',#{keywords},'%')
+            OR description LIKE CONCAT('%',#{keywords},'%')
+    </select>
+    <select id="getAllPrescription" resultType="com.jyc.prescriptionhistory.bean.Prescription">
+        SELECT * FROM prescription
+    </select>
+    <insert id="addPrescription">
+        INSERT INTO prescription(pres_name,pin_yin,use_way,effects,indications,description) VALUES (#{presName},#{pinYin},#{useWay},#{effects},#{indications},#{description})
+    </insert>
+    <delete id="delPrescription">
+        DELETE FROM prescription WHERE pres_id=#{presId}
+    </delete>
+    <update id="updatePrescription">
+        UPDATE prescription SET pres_name=#{presName},pin_yin=#{pinYin},use_way=#{useWay},effects=#{effects},indications=#{indications},description=#{description} WHERE pres_id=#{presId}
+    </update>
+    <insert id="addPrescriptionBatch" parameterType="java.util.List">
+        INSERT INTO prescription(pres_name,pin_yin,use_way,effects,indications,description)
+        VALUES
+        <foreach collection="prescriptions" separator="," item="pres">
+            (#{pres.presName},#{pres.pinYin},#{pres.useWay},#{pres.effects},#{pres.indications},#{pres.description})
+        </foreach>
+    </insert>
+
+</mapper>

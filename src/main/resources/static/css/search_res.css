@@ -1,0 +1,339 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+html{
+    font-size:62.5%;
+}
+@media screen and (max-width: 960px){
+    .top{
+        width: 100%;
+        height: 10rem;
+    }
+    .top .welcome_text{
+        width: 100%;
+        height: 4rem;
+        line-height: 4rem;
+        background: rgba(0,0,0,0.1);
+        font-size: 1.3rem;
+        position: relative;
+        display: none;
+    }
+    .welcome_text span{
+        color: rgba(63, 63, 63, 0.93);
+        position: absolute;
+        left:6rem;
+    }
+
+    .top .nav{
+        width: 100%;
+        height: 10rem;
+        position: relative;
+        line-height: 10rem;
+        border-bottom: 0.1rem solid #007bff;
+    }
+    .nav .title{
+        font-family: 华文楷体;
+        font-size: 3rem;
+        position: absolute;
+        left: 6rem;
+        display: none;
+    }
+    .nav .login_btn{
+        text-decoration: none;
+        position: absolute;
+        font-size: 1.2rem;
+        right: 1.5rem;
+    }
+
+    .nav .search{
+        position: absolute;
+        text-align: center;
+        left: 1.2rem;
+        top: 3rem;
+    }
+
+    .search input{
+        width: 18rem;
+        height: 4rem;
+        font-size: 1.2rem;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .search button{
+        width: 5rem;
+        height: 4rem;
+        margin-left: 0.5rem;
+        font-size: 1.2rem;
+        display: inline-block;
+        vertical-align: top;
+    }
+    .res{
+        /*background: yellow;*/
+        width: 100%;
+        height: auto;
+    }
+
+    .res .res_num{
+        width: 100%;
+        height: 1rem;
+        margin-top: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .res_num .num_span{
+        margin-left: 1rem;
+        color:gray;
+    }
+    .res .res_list{
+        list-style: none;
+        margin-top: 3rem;
+        margin-left: 1.2rem;
+    }
+    .res_list .res_item{
+        width: 100%;
+        height: 16rem;
+        /*background: red;*/
+        border-bottom: 0.1rem solid #ccc;
+        overflow:auto;
+    }
+    .res_list li:last-child{
+        border-bottom: none;
+    }
+    .res_item a{
+        display: block;
+        /*margin-top: 1rem;*/
+        font-size: 1.5rem;
+    }
+    .res_item img{
+        width: 30%;
+        margin-top: 0.5rem;
+        height: 11rem;
+        float: left;
+    }
+
+    .res_item p{
+        width: 60%;
+        margin-left: 3rem;
+        font-size: 1.2rem;
+        float: left;
+    }
+
+    .footer{
+        height: 6rem;
+        /*background: red;*/
+        text-align: center;
+        line-height: 6rem;
+    }
+    .footer .page a{
+        text-decoration: none;
+        display: inline-block;
+        width: 3rem;
+        height: 3rem;
+        border: 0.1rem solid #c8d9ef;
+        line-height: 3rem;
+        margin-left: 1rem;
+        box-sizing: border-box;
+    }
+
+    .footer .page a:hover{
+        cursor: pointer;
+    }
+    .footer .page .lastPage{
+        width: 6rem;
+    }
+
+    .footer .page .firstPage{
+        width: 6rem;
+    }
+    .page .current{
+        background: #4992fa;
+        color: white;
+    }
+
+    .login_form{
+        height: 25rem;
+    }
+    .login_form form{
+        width: 30rem;
+        margin: 0 auto;
+    }
+    .login_form input{
+        width: 30rem;
+    }
+    .login_form #btn_group{
+        text-align: center;
+    }
+
+    .login_form #btn_group button{
+        width: 10rem;
+        margin-top: 3rem;
+    }
+
+}
+@media screen and (min-width: 960px){
+    .top{
+        width: 100%;
+        height: 14rem;
+    }
+    .top .welcome_text{
+        width: 100%;
+        height: 4rem;
+        line-height: 4rem;
+        background: rgba(0,0,0,0.1);
+        font-size: 1.3rem;
+        position: relative;
+    }
+    .welcome_text span{
+        color: rgba(63, 63, 63, 0.93);
+        position: absolute;
+        left:6rem;
+    }
+
+    .top .nav{
+        width: 100%;
+        height: 10rem;
+        position: relative;
+        line-height: 10rem;
+        border-bottom: 0.1rem solid #007bff;
+    }
+    .nav .title{
+        font-family: 华文楷体;
+        font-size: 3rem;
+        position: absolute;
+        left: 6rem;
+    }
+    .nav .login_btn{
+        text-decoration: none;
+        position: absolute;
+        font-size: 1.2rem;
+        right: 45rem;
+    }
+
+    .nav .search{
+        position: absolute;
+        text-align: center;
+        right: 3rem;
+        top: 3.5rem;
+    }
+
+    .search input{
+        width: 30rem;
+        height: 3rem;
+        font-size: 1.2rem;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .search button{
+        width: 10rem;
+        height: 3rem;
+        font-size: 1.2rem;
+        display: inline-block;
+        vertical-align: top;
+    }
+    .res{
+        /*background: yellow;*/
+        width: 100%;
+        height: auto;
+    }
+
+    .res .res_num{
+        width: 100%;
+        height: 4rem;
+        line-height: 4rem;
+        font-size: 1.6rem;
+    }
+
+    .res_num .num_span{
+        margin-left: 6rem;
+        color:gray;
+    }
+    .res .res_list{
+        list-style: none;
+        margin-top: 3rem;
+        margin-left: 17rem;
+    }
+    .res_list .res_item{
+        width: 80rem;
+        height: 20rem;
+        /*background: red;*/
+        border-bottom: 0.1rem solid #ccc;
+        overflow: auto;
+    }
+    .res_list li:last-child{
+        border-bottom: none;
+    }
+    .res_item a{
+        display: block;
+        margin-top: 1rem;
+        font-size: 2rem;
+    }
+    .res_item img{
+        margin-top: 1rem;
+        width: 13rem;
+        height: 13rem;
+        float: left;
+    }
+
+    .res_item p{
+        width: 60rem;
+        margin-left: 3rem;
+        font-size: 1.5rem;
+        float: left;
+    }
+
+    .footer{
+        height: 6rem;
+        /*background: red;*/
+        text-align: center;
+        line-height: 6rem;
+    }
+    .footer .page a{
+        text-decoration: none;
+        display: inline-block;
+        width: 3rem;
+        height: 3rem;
+        border: 0.1rem solid #c8d9ef;
+        line-height: 3rem;
+        margin-left: 1rem;
+        box-sizing: border-box;
+    }
+
+    .footer .page a:hover{
+        cursor: pointer;
+    }
+    .footer .page .lastPage{
+        width: 6rem;
+    }
+
+    .footer .page .firstPage{
+        width: 6rem;
+    }
+    .page .current{
+        background: #4992fa;
+        color: white;
+    }
+
+    .login_form{
+        height: 35rem;
+    }
+    .login_form form{
+        width: 30rem;
+        margin: 0 auto;
+    }
+    .login_form input{
+        width: 30rem;
+    }
+    .login_form #btn_group{
+        text-align: center;
+    }
+
+    .login_form #btn_group button{
+        width: 10rem;
+        margin-top: 3rem;
+    }
+
+}
+

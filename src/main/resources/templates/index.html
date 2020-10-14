@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge，chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中药方剂</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="/js/jquery-1.12.4.js"></script>
+    <script src="/js/echarts.min.js"></script>
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+    <script src="/js/bootstrap.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            let getRecordsData=function () {
+                $.ajax({
+                   url:'/presRecord',
+                   type:'GET',
+                    success: function(res) {
+                        console.log(res);
+                        let data=[];
+                        let pres=[];
+                        let ages=['汉','唐','宋','元','明','清','现代','其他'];
+                        let index=-1;
+                        let ext=[];
+                        for(let val of res){
+                            let tmp=[];
+                            if(!($.inArray(val.presName, pres)>=0)){
+                                if(pres.length!=0&&ext.length!=0){
+                                    tmp.push(general);
+                                    tmp.push("其他");
+                                    tmp.push(ext.length);
+                                    tmp.push(ext);
+                                    data.push(tmp);
+                                    ext=[];
+                                    tmp=[];
+                                }
+                                pres.push(val.presName);
+                                general=pres.indexOf(val.presName);
+                            }
+                            if(val.age==="其他"){
+                                ext=ext.concat(val.bookNames);
+                            }
+                            else{
+                                tmp.push(general);
+                                tmp.push(val.age);
+                                tmp.push(val.count);
+                                tmp.push(val.bookNames);
+                                data.push(tmp);
+                            }
+
+                        }
+                        let len=pres.length;
+                        // console.log(pres);
+                        // console.log(data);
+                        echarts.util.each(pres, function (pres, idx) {
+                            option.baseOption.title.push({
+                                text:pres
+                            })
+                            option.media[0].option.title.push({
+                                textBaseline: 'top',
+                                top: (idx) * 100 / len + '%',
+                                textStyle:{
+                                    fontSize:15
+                                }
+
+                            });
+                            option.media[1].option.title.push({
+                                textBaseline: 'middle',
+                                top: (idx+0.5) * 100 / len +1+ '%',
+
+                            });
+                            option.baseOption.singleAxis.push({
+                                type: 'category',
+                                boundaryGap: false,
+                                data: ages,
+                                name:'朝代',
+                                nameLocation:'end',
+                                splitLine:false,
+                                axisLine:{
+                                    lineStyle:{
+                                        color:'#646464'
+                                    }
+                                }
+                            })
+                            option.media[0].option.singleAxis.push({
+                                left: 30,
+                                top: (idx * 100 / len + 5)+1 + '%',
+                                height: (100 / len - 10) + '%',
+
+                            });
+                            option.media[1].option.singleAxis.push({
+                                left: 150,
+                                top: (idx * 100 / len + 5)+1 + '%',
+                                height: (100 / len - 10) + '%',
+                            });
+                            option.baseOption.series.push({
+                                singleAxisIndex: idx,
+                                coordinateSystem: 'singleAxis',
+                                type: 'scatter',
+                                data: [],
+                                symbolSize: function (dataItem) {
+                                    return Math.sqrt(dataItem[1]*100);
+                                }
+                            });
+                        });
+
+                        echarts.util.each(data, function (dataItem) {
+                            option.baseOption.series[dataItem[0]].data.push([dataItem[1],dataItem[2],dataItem[3]]);
+                        });
+                        recordChart.setOption(option);
+                    }
+                });
+            }
+            let recordChart = echarts.init(document.getElementById('records_visible'));
+            let option={
+                baseOption:{
+                    tooltip: {
+                        padding: 10,
+                        backgroundColor: '#222',
+                        borderColor: '#777',
+                        borderWidth: 1,
+                        position: 'left',
+                        formatter: function (obj) {
+                            let value = obj.value;
+                            let books=value[2];
+                            let res='';
+                            books.forEach(function (val,idx) {
+                                res+=val+'<br>';
+
+                            });
+                            return res;
+
+                        }
+                    },
+                    title: [{
+                        text:"方剂记录历史分布",
+                    }],
+                    singleAxis:[],
+                    series: [],
+
+                },
+                media:[{
+                        query:{
+                            maxWidth:960
+                        },
+                        option:{
+                            title:[{
+                                left: 'center',
+                                top:0
+                            }],
+                            singleAxis: []
+                        }
+                    },
+                    {
+                        query:{
+                            minWidth:960
+                        },
+                        option:{
+                            title:[{
+                                left: 'center',
+                                top:0
+                            }],
+                            singleAxis:[]
+                        }
+                    }
+
+
+                ]
+            }
+
+            getRecordsData();
+
+        });
+
+    </script>
+
+</head>
+<body>
+    <div class="top">
+        <div class="welcome_text">
+            <span>您好，欢迎来到中药方剂历史衍化可视化平台</span>
+        </div>
+        <div class="nav">
+            <span class="title">方剂历史衍化信息平台</span>
+            <span id="login_tip">${msg!''}</span>
+            <a href="javascript:;" class="login_btn" data-toggle="modal" data-target="#login">登录</a>
+        </div>
+    </div>
+    <div class="search_bg">
+            <form class="search" action="/prescription">
+                <input class="form-control search_input" required type="search" name="keywords" placeholder="请输入方剂名称、成分名称或适用症">
+                <input class="form-control search_btn" type="submit" value="查询">
+            </form>
+    </div>
+    <div class="bottom">
+        <div id="records_visible"></div>
+    </div>
+
+    <div class="modal fade" id="login" tabindex="-1" role="dialog" aria-labelledby="登录" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">
+                        登录
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body login_form">
+                    <form action="/login" method="post">
+                        <div class="form-group">
+                            <label for="inputUserName">用户名:</label>
+                            <input type="text" class="form-control" id="inputUserName" name="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPassword">密码:</label>
+                            <input type="password" class="form-control" id="inputPassword" name="password">
+                        </div>
+                        <div class="form-group" id="btn_group">
+                            <button type="submit" id="login_submit" class="btn btn-primary">登录</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+</body>
+</html>

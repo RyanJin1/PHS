@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge，chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>方剂历史可视化</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="/js/jquery-1.12.4.js"></script>
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/echarts.min.js"></script>
+    <script src="/js/echarts-wordcloud.min.js"></script>
+    <script src="/js/main.js"></script>
+
+
+</head>
+<body>
+<div id="app">
+<!--    <div id="header">-->
+<!--        <div class="title">-->
+<!--            <span>方剂历史衍化信息平台</span>-->
+<!--        </div>-->
+<!--        <div class="login">-->
+<!--            <a href="javascript:;" data-toggle="modal" data-target="#login">登录</a>-->
+<!--        </div>-->
+<!--        <div class="search">-->
+<!--            <form action="/prescription">-->
+<!--                <input type="search" name="keywords" placeholder="请输入方剂名称、成分名称或适用症">-->
+<!--                <button id="search_btn" class="form-control" type="submit">查询</button>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+    <div class="top">
+        <div class="welcome_text">
+            <a href="javascript:history.back()" id="back">&lt;返回</a>
+            <span>您好，欢迎来到中药方剂历史衍化可视化平台</span>
+        </div>
+        <div class="nav">
+            <span class="title">方剂历史衍化信息平台</span>
+            <a href="javascript:;" class="login_btn" data-toggle="modal" data-target="#login">登录</a>
+            <div class="search">
+                <form action="/prescription">
+                    <input class="form-control" type="search" required name="keywords" placeholder="请输入方剂名称、成分名称或适用症">
+                    <button class="btn btn-primary" type="submit">查询</button>
+                </form>
+            </div>
+        </div>
+        <div class="nav_ext">
+            <ul id="chart_list">
+                <li class="nav_item">
+                    <a href="javascript:;" id="toPres_der" class="current_chart" >方剂衍化过程</a>
+                    <ul class="sub_list">
+                        <li>方剂衍化图</li>
+                        <li>方剂衍化树</li>
+                    </ul>
+                </li>
+                <li class="nav_item">
+                    <a href="javascript:;" id="toPres_his" >方剂衍化趋势</a>
+                </li>
+                <li class="nav_item">
+                    <a href="javascript:;" id="toPres_char" >方剂衍化特征</a>
+                    <ul class="sub_list">
+                        <li>方剂组成特征</li>
+                        <li>方剂组成关系</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="main_derivation" class="main">
+        <#if msg??>
+            <p id="no_data">${msg}</p>
+        </#if>
+        <div id="prescription_derivation" class="chart"></div>
+        <div id="pres_derivation_tree" class="chart"></div>
+    </div>
+    <div id="main_history" class="main">
+        <div class="main_top">
+
+
+            <div id="prescription_history" class="chart"></div>
+        </div>
+        <div class="main_center">
+            <div id="comp_derivation"></div>
+        </div>
+        <div class="main_bottom">
+            <div id="main_bottom_content" class="chart">
+            </div>
+            <div class="main_bottom_info">
+                <#if info??>
+                    <table class="prescription_info">
+                        <tr>
+                            <th>方剂名称</th>
+                            <td>${presName!''}</td>
+                        </tr>
+                        <tr>
+                            <th>古籍名称</th>
+                            <td>${info.bookName!''}</td>
+                        </tr>
+                        <tr>
+                            <th>组成剂量</th>
+                            <td>${info.components!''}</td>
+                        </tr>
+                        <tr>
+                            <th>用法</th>
+                            <td>${info.useWay!''}</td>
+                        </tr>
+                        <tr>
+                            <th>功效</th>
+                            <td>${info.effects!''}</td>
+                        </tr>
+                        <tr>
+                            <th>适应症</th>
+                            <td>${info.indication!''}</td>
+                        </tr>
+                    </table>
+                <#else>
+                </#if>
+            </div>
+        </div>
+    </div>
+    <div id="main_characteristic" class="main">
+        <div class="toolbox">
+            <a href="javascript:;" id="magicType">切换为热点图</a>
+        </div>
+        <div id="prescription_wordCloud" class="chart"></div>
+<!--        <div id="component_heatMap" class="chart"></div>-->
+        <div id="history_relationship" class="chart"></div>
+    </div>
+    <div id="footer"></div>
+</div>
+
+<div class="modal fade" id="login" tabindex="-1" role="dialog" aria-labelledby="登录" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                    登录
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+            </div>
+            <div class="modal-body login_form">
+                <form action="/login" method="post">
+                    <div class="form-group">
+                        <label for="inputUserName">用户名:</label>
+                        <input type="text" name="username" class="form-control" id="inputUserName" aria-describedby="loginTip">
+                        <small id="loginTip" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPassword">密码:</label>
+                        <input type="password" class="form-control" id="inputPassword" name="password">
+                    </div>
+                    <div class="form-group" id="btn_group">
+                        <button type="submit" class="btn btn-primary">登录</button>
+                    </div>
+
+                </form>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+<script type="text/javascript">
+    $(function () {
+        //可视化板块切换
+        function containerToggle($this) {
+            $this.siblings().find('a').removeClass("current_chart");
+            $this.find('a').addClass("current_chart");
+            $(".main").each(function (index, item) {
+                if (index == $this.index()) {
+                    $(this).stop().fadeIn(1000);
+                    $(this).siblings(".main").stop().fadeOut(1000);
+                    presDerivationChart.resize();
+                    presDerivationTree.resize();
+                    myChart.resize();
+                    contentCharts.resize();
+                    compWordCloud.resize();
+                    historyRelationship.resize();
+                    return;
+                }
+            })
+        };
+        //可视化图表切换
+        function chartToggle($this) {
+            let currentChartIndex=$this.index();
+            let currentIndex=$this.parents("li").index();
+            let currentMain;
+            $(".main").each(function (index){
+                if(index==currentIndex){
+                    currentMain=$(this);
+                    return;
+                }
+            });
+            currentMain.stop().fadeIn(1000);
+            currentMain.siblings(".main").stop().fadeOut(1000);
+            let currentChart=$(currentMain.children(".chart")[currentChartIndex]);
+            if(currentIndex==2&&currentChartIndex==0)
+                currentMain.children(".toolbox").removeClass("hide");
+            else
+                currentMain.children(".toolbox").addClass("hide");
+            currentChart.siblings(".chart").stop().fadeOut(500);
+            console.log(currentChart.siblings(".chart"));
+            currentChart.stop().fadeIn(500);
+            presDerivationChart.resize();
+            presDerivationTree.resize();
+            myChart.resize();
+            contentCharts.resize();
+            compWordCloud.resize();
+            historyRelationship.resize();
+        }
+    //导航栏切换
+        if('ontouchstart' in document.documentElement === false) {
+            $(".nav_item").mouseenter(function () {
+                let $sub=$(this).children('.sub_list');
+                $sub.stop().slideDown(500);
+            });
+            $(".nav_item").mouseleave(function () {
+                let $sub=$(this).children('.sub_list');
+                $sub.stop().slideUp(500);
+            });
+            $(".nav_item").click(function () {
+                let $this = $(this);
+
+                containerToggle($this);
+            });
+            $(".sub_list>li").click(function () {
+                let $this=$(this);
+                chartToggle($this);
+
+            });
+        }else{
+            $(".nav_item").on('touchstart',function() {
+                let $this=$(this);
+                let $sub=$(this).children('.sub_list');
+                $(this).siblings(".nav_item").children('.sub_list').stop().slideUp(500);
+                $sub.stop().slideDown(500);
+                containerToggle($this);
+            });
+            $(".sub_list>li").on('touchstart',function () {
+                let $this=$(this);
+                chartToggle($this);
+                $(this).parent().stop().slideUp(500);
+            });
+        }
+        if('ontouchstart' in document.documentElement === false){
+            $('#magicType').click(function(){
+                if($(this).html()=='切换为热点图') {
+                    $(this).html('切换为字符云');
+                    compWordCloud.setOption(option6,true)
+                }
+                else{
+                    $(this).html('切换为热点图');
+                    compWordCloud.setOption(option4,true)
+
+                }
+
+
+
+            });
+        }else {
+            $('#magicType').on('touchstart', function () {
+                if($(this).html()=='切换为热点图') {
+                    $(this).html('切换为字符云');
+                    compWordCloud.setOption(option6,true)
+                }
+                else{
+                    $(this).html('切换为热点图');
+                    compWordCloud.setOption(option4,true)
+
+                }
+
+            });
+        }
+
+    //处理后台数据
+        function getData() {
+            let res=[];
+            let tmp=[];
+            <#list dimensions as dimension>
+                tmp.push("${dimension}");
+            </#list>
+                res.push(tmp);
+            <#list visibleData as vdl>
+                tmp=[];
+            <#list vdl as vd>
+                tmp.push("${vd}");
+            </#list>
+                res.push(tmp);
+            </#list>
+            for (let i = 1; i < res.length; i++) {
+                for (let j = 1; j < res[i].length; j++) {
+                    res[i][j]=Number(res[i][j]);
+                }
+            }
+            return res;
+        }
+        //获取方剂主治信息 2.0添加
+        function getIndication(){
+           let res=[];
+           <#list indications as indic>
+                res.push('${indic}');
+           </#list>
+            return res;
+        }
+        //获取方剂年代信息
+        function getAges(){
+            let res=[];
+            <#list ages as age>
+                res.push('${age}');
+            </#list>
+            return res;
+        }
+
+        let AGE=['汉','唐','金','宋','元','明','清','现代','朝鲜'];
+        let ages=getAges();
+        let myData=getData();
+        //
+        myData=DynastySort(myData,ages,AGE,1);
+        repeatBookHandler(myData);
+        console.log(myData);
+        let itemName=getName(myData);
+        let itemValue=getValue(myData);
+        let bookName=getBookNames(myData);
+        let indications=getIndication();
+
+        indications=DynastySort(indications,ages,AGE,0);
+        console.log(indications);
+        let treeData=getTreeData(itemName,itemValue,ages,bookName,AGE,'${presName}');
+        console.log(treeData);
+        let graphData=getGraphData(itemName,itemValue,bookName,indications);
+        let indicationsLine=newLine(15,indications);
+
+        let lastTimeLineIndex=0;
+        let compFrequency=getComponentFrequency(itemName,itemValue);
+
+
+
+        let contentCharts=echarts.init(document.getElementById('main_bottom_content'));
+
+        let myChart = echarts.init(document.getElementById('prescription_history'));
+
+        let compChart=echarts.init(document.getElementById('comp_derivation'));
+
+        let presDerivationChart=echarts.init(document.getElementById('prescription_derivation'));
+
+        let compWordCloud=echarts.init(document.getElementById('prescription_wordCloud'));
+
+        let historyRelationship=echarts.init(document.getElementById('history_relationship'));
+
+        // let compHeatMap=echarts.init(document.getElementById('component_heatMap'));
+    // setTimeout(function () {
+        let presDerivationTree=echarts.init(document.getElementById('pres_derivation_tree'));
+        let option1 = {
+            baseOption:{
+                title:{
+                    text:'${presName}衍化趋势图',
+                    left:'center',
+                },
+                legend:{
+                    type:'scroll',
+                    orient:'horizontal',
+                },
+                dataZoom:[
+                    {
+                        id: 'dataZoomInside',
+                        type: 'inside',
+                        // xAxisIndex: [0],
+                        filterMode: 'filter'
+                    },
+                    {
+                        id: 'dataZoomSlider',
+                        type: 'slider',
+                        xAxisIndex: [0],
+                        filterMode: 'filter'
+                    },
+                ],
+                tooltip: {
+                    axisPointer: {
+                        type: 'cross'
+                    },
+                    position: function (pos, params, el, elRect, size) {
+                        let obj = {top: 10};
+                        obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+                        return obj;
+                    },
+
+                    trigger: 'axis',
+                    showContent: true,
+                     formatter:function (params) {
+                         // console.log(params[1].value);
+                         let res='<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 18px;padding-bottom: 7px;margin-bottom: 7px">'
+                                 +params[0].name
+                             +'</div>'
+                         res+='单位(g)<br>';
+                         let l= params[0].value.length;
+                         for (let i = 1; i < l; i++) {
+                             if(params[0].value[i]!=0){
+                                 res+=params[0].dimensionNames[i]+':'+params[0].value[i]+'<br>';
+                             }
+                             else{
+                                 continue;
+                             }
+                         }
+                         return res;
+                     }
+                },
+                dataset: {
+                    source: myData
+                },
+                xAxis: {type: 'category', axisLabel: {interval:0}},
+                yAxis: {gridIndex: 0},
+                series: getSeries(myData)
+            },
+            media:[{
+                query:{
+                    maxWidth:960
+                },
+                option:{
+                    title:{
+                        textStyle:{
+                            fontSize:12
+                        }
+                    },
+                    legend:{
+                        top:20
+                    },
+                    xAxis: {
+                        axisLabel: {
+                            rotate: 45,
+                           fontSize:6
+                        }
+                    },
+                    grid: {
+                        bottom:'30%'
+                    },
+                }
+            },
+                {
+                    query:{
+                        minWidth:960
+                    },
+                    option:{
+                        legend:{
+                            top:40
+                        },
+                        title:{
+                            textStyle:{
+                                fontSize:18
+                            }
+                        },
+                        xAxis: {
+                            axisLabel: {
+                                rotate: 40,
+                                fontSize:12
+                            }
+                        },
+                        grid: {
+                            top:'15%',
+                            bottom:'25%'
+                        }
+                    }
+                }
+            ]
+
+
+
+
+        };
+
+        //获取方剂信息
+        function updatePresInfo(index,presName){
+            $.ajax({
+                url:"/presInfo?index="+index+"&presName="+presName,
+                contentType: "application/json;charset=UTF-8",
+                type: 'get',
+                success:function (res) {
+                    // console.log(res.historyId);
+                    updateTable(res);
+                },
+                error:function () {
+
+                }
+            })
+        }
+        //表格显示方剂信息
+        function updateTable(data) {
+            let $container=$(".main_bottom_info");
+            $container.html("");
+            let table="         <table class=\"prescription_info\">\n" +
+                "                    <tr>\n" +
+                "                        <th>方剂名称</th>\n" +
+                "                        <td>${presName}</td>\n" +
+                "                    </tr>\n" +
+                "                    <tr>\n" +
+                "                        <th>古籍名称</th>\n" +
+                "                        <td>"+data.bookName+"</td>\n" +
+                "                    </tr>\n" +
+                "                    <tr>\n" +
+                "                        <th>组成剂量</th>\n" +
+                "                        <td>"+data.components+"</td>\n" +
+                "                    </tr>\n" +
+                "                    <tr>\n" +
+                "                        <th>用法</th>\n" +
+                "                        <td>"+(data.useWay==null?"":data.useWay)+"</td>\n" +
+                "                    </tr>\n" +
+                "                    <tr>\n" +
+                "                        <th>功效</th>\n" +
+                "                        <td>"+(data.effects==null?"":data.effects)+"</td>\n" +
+                "                    </tr>\n" +
+                "                    <tr>\n" +
+                "                        <th>适应症</th>\n" +
+                "                        <td>"+(data.indication==null?"":data.indication)+"</td>\n" +
+                "                    </tr>\n" +
+                "                </table>";
+            $container.append(table);
+
+        }
+
+        myChart.on('click', function (params) {
+            let index=params.dataIndex;
+            if(index>=0){
+                let dimension = index + 1;
+                contentCharts.setOption({
+                    series: {
+                        id: 'pie',
+                        label: {
+                            formatter: '{b}: {c}g({d}%)'
+                        },
+                        data:getContentData(index,itemName,itemValue).sort(function (a, b) { return a.value - b.value; })
+                    }
+                });
+                updatePresInfo(index,'${presName}');
+            }
+        });
+        let option2={
+            baseOption: {
+                legend: {
+                    type: 'scroll',
+                    orient: 'horizontal',
+                    icon: 'pin'
+                },
+                series: {
+                    type: 'pie',
+                    id: 'pie',
+                    radius: '50%',
+                    center: ['50%', '46%'],
+                    label: {
+                        formatter: '{b}: {c}g({d}%)'
+                    },
+                    data: getContentData(0, itemName, itemValue).sort(function (a, b) { return a.value - b.value; }),
+                }
+            },
+            media:[{
+                query:{
+                    minWidth:480
+                },
+                option:{
+                    series:{
+                        label:{
+                            fontSize:12
+                        }
+                    }
+                }
+            },{
+                query:{
+                    maxWidth:480
+                },
+                option:{
+                    series:{
+                        label:{
+                            fontSize:8
+                        }
+                    }
+                }
+            }]
+        }
+
+        myChart.setOption(option1);
+        contentCharts.setOption(option2);
+
+        let option3={
+            baseOption: {
+                timeline: {
+                    axisType: 'category',
+
+                    autoPlay: true,
+
+                    playInterval: 2000,
+                    label: {
+                        position: 5,
+                        color: '#999',
+                        interval:0
+                    },
+                    symbol: 'none',
+                    lineStyle: {
+                        color: '#555'
+                    },
+                    checkpointStyle: {
+                        color: '#bbb',
+                        borderColor: '#777',
+                        borderWidth: 2
+                    },
+                    controlStyle: {
+                        showNextBtn: false,
+                        showPrevBtn: false,
+                        color: '#666',
+                        borderColor: '#666'
+                    },
+                    emphasis: {
+                        label: {
+                            color: '#ccc'
+                        },
+                        controlStyle: {
+                            color: '#aaa',
+                            borderColor: '#aaa'
+                        }
+                    },
+                    data: [],
+                },
+                graphic: {
+                        elements: [{
+                            id:'bookName',
+                            type: 'text',
+                            style: {
+                                text: '当前方名:'+bookName[0],
+                                font: 'bolder 2em "Microsoft YaHei", sans-serif'
+                            },
+                            bottom: '56%',
+                            left: '5%'
+                        },{
+                            id:'exContent',
+                            type: 'text',
+                            style: {
+                                text: '去除成分:',
+                                font: 'bolder 1.5em "Microsoft YaHei", sans-serif'
+                            },
+                            top: '45%',
+                            left: '5%'
+                        },{
+                            id:'indication',
+                            type: 'text',
+                            style: {
+                                text: '成分:\n\n'+contentInfoHandler(itemName,itemValue,0).join(' ')+'\n\n'+'适应症:\n\n'+indicationsLine[0],
+                                font: 'bolder 1.5em "Microsoft YaHei", sans-serif'
+                            },
+                            top: '45%',
+                            left: '12%'
+                        },{
+                            type:'text',
+                            style:{
+                                text:'时间轴顺序为从上到下',
+                                fill:'rgba(0,0,0,0.5)'
+                            },
+                            top:'1%',
+                            right:'8%'
+                        },{
+                            type:'text',
+                            style:{
+                                fill:'rgba(0,0,0,0.5)',
+                                text:'方剂药味变化频繁度',
+                                font: 'bolder 3em "Microsoft YaHei", sans-serif'
+                            },
+                            bottom:'32%',
+                            left:'43%'
+
+                        }
+                    ]
+                },
+                    title: {
+                        text: '${presName}的衍化',
+                        textStyle: {
+                            color: '#000'
+                        }
+                    },
+                    dataset: {
+                        source: myData
+                    },
+                    tooltip: {
+                    },
+                    visualMap: {
+                        orient: 'horizontal',
+                        left: 'center',
+                        min: 0,
+                        max: bookName.length,
+                        seriesIndex: 2,
+                        splitNumber:4,
+                        // Map the score column to color
+                        color: ['#C70039','#FF5733','#FFC300','#DAF7A6']
+                        // inRange: {
+                        //     colorLightness: [0, 1]
+                        // }
+                    },
+                    xAxis: {
+                        name: '含量',
+                        axisLabel: {
+                            formatter: '{value} g',
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#666'
+                            }
+                        }
+                    },
+                    yAxis: {
+                        type: 'category',
+                        name: '成分',
+                        axisLabel: {},
+                        axisLine: {
+                            lineStyle: {
+                                color: '#666'
+                            }
+                        }
+
+                    },
+                    series: [
+                        {
+                            type: 'bar',
+                            seriesLayoutBy: 'row',
+                            encode: {
+                                // Map the "amount" column to X axis.
+                                x: bookName[0],
+                                // Map the "product" column to Y axis
+                                y: 'book'
+                            },
+                            itemStyle: {
+                                color: '#A64B00'
+
+                            }
+                        },
+                        {
+                            name: bookName[bookName.length - 1],
+                            type: 'bar',
+                            seriesLayoutBy: 'row',
+                            encode: {
+                                // Map the "amount" column to X axis.
+                                x: bookName[bookName.length - 1],
+                                // Map the "product" column to Y axis
+                                y: 'book'
+                            },
+                            itemStyle: {
+                                color: '#FFB273'
+                            }
+                        },
+                        {
+                            name: '成分变迁',
+                            type: 'graph',
+                            data: getGraphNode(itemName, itemValue, 0),
+                            layout: 'circular',
+                            coordinateSystem: null,
+                            label: {
+                                show: 'true',
+                                // position: 'top',
+                                fontWeight: 'bold',
+                                textShadowColor:'rgba(0, 0, 0, 0.3)',
+                                textShadowBlur: 5
+                            },
+                            tooltip: {
+                                formatter: '{b}:{c}次'
+                            },
+                            itemStyle:{
+                                borderColor:'#FDE645',
+
+                            },
+                            emphasis:{
+                                itemStyle:{
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                    shadowBlur: 10
+                                },
+
+                            }
+
+
+                        }
+                    ],
+
+            },
+            media:[{
+                query:{
+                    minWidth:960
+                },
+                option:{
+                    timeline:{
+                        orient: 'vertical',
+                        left: null,
+                        right: '12%',
+                        top: '3%',
+                        bottom: 20,
+                        width: 55,
+                        height: '90%',
+                        inverse: true,
+                        label: {
+                            position: 7,
+                            color: '#999',
+                            rotate:0,
+                            fontSize:12,
+                            align:'left'
+                        },
+                    },
+                    legend:{
+                        left:'10%',
+                        top:'1%',
+                        itemGap:10,
+                        orient: 'horizontal',
+                        textStyle:{
+                            fontSize:12
+                        }
+                    },
+                    grid:{
+                      height:'35%',
+                        width:'75%',
+                        left:'5%',
+                        top:'4%'
+                    },
+                    title:{
+                        left:'center'
+                    },
+                    visualMap: {
+                        top:'42%',
+                    },
+                    series:[
+                        {
+                            name:'成分变迁',
+                            top:'50%',
+                            height:'35%',
+                            width:'80%',
+                            left:'12%',
+                            circular:{
+                                rotateLabel:false
+                            },
+                            label:{
+                                fontSize:15
+                            }
+
+                        }
+                    ]
+                }
+
+            },{
+                query:{
+                    maxWidth:960
+                },
+                option:{
+                    timeline:{
+                        orient: 'horizontal',
+                        left: 5,
+                        right: null,
+                        top: null,
+                        bottom: '54%',
+                        width: '90%',
+                        height: 50,
+                        inverse: false,
+                        label: {
+                            position: 5,
+                            color: '#999',
+                            rotate:-75,
+                            fontSize:8,
+                            align:'left'
+                        },
+                    },
+                    legend:{
+                        right:'1%',
+                        top:'1%',
+                        itemGap:3,
+                        orient:'vertical',
+                        textStyle:{
+                            fontSize:10
+                        }
+                    },
+                    graphic:{
+                        elements:[{
+                            type:'text',
+
+                        }]
+                    },
+                    grid:{
+                        height:'30%',
+                        left:'12%',
+                        top:'8%'
+                    },
+                    visualMap:{
+                        itemGap:5,
+                        bottom:'45%'
+                    },
+                    series:[
+                        {
+                            name:'成分变迁',
+                            top:'40%',
+                            height:'70%',
+                            width:'70%',
+                            left:'15%',
+                            label:{
+                              fontSize:12
+                            }
+
+                        }
+                    ]
+                }
+            }],
+            options:[]
+        }
+        presDerivationChart.on('timelinechanged',function (obj) {
+            // console.log(lastTimeLineIndex);
+            // console.log(obj.currentIndex);
+            let tip='去除成分:\n\n';
+            let indication='适应症:\n\n'
+            let tips=getContentDeduct(itemName,itemValue,obj.currentIndex);
+            // let varies=getContentChangeInfoInChart(lastNodes,currentNodes);
+            let contentInfo=contentInfoHandler(itemName,itemValue,obj.currentIndex);
+            let content='成分:\n\n'+contentInfo.join(' ')+'\n\n';
+            // option3.baseOption.graphic.style.text=tip+tips.join('\n');
+            presDerivationChart.setOption({
+                baseOption:{
+                    graphic: {
+                        elements: [{
+                            id:'bookName',
+                            type:'text',
+                            style:{
+                                text:'当前方名:'+bookName[obj.currentIndex]
+                            }
+                        },{
+                            id:'exContent',
+                            type: 'text',
+                            style: {
+                                text: tip+tips.join('\n'),
+                            },
+                            top: '45%',
+                            left: '5%'
+                        },{
+                            id:'indication',
+                            type: 'text',
+                            style: {
+                                text: content+indication+indicationsLine[obj.currentIndex],
+                            },
+                            top: '45%',
+                            left: '12%'
+                        }
+                        ]
+
+                    },
+                    // series:[
+                    //     {
+                    //         name:'成分变迁',
+                    //         label:{
+                    //             formatter:function (params) {
+                    //                 return varies[params.dataIndex];
+                    //             }
+                    //         },
+                    //
+                    //     }
+                    // ]
+                }
+            });
+            lastTimeLineIndex=obj.currentIndex;
+        });
+        function setDerivationData(bookName){
+            for (let i = 0; i < bookName.length ; i++) {
+                option3.baseOption.timeline.data.push(bookName[i]);
+                if(i!=0){
+                    option3.options.push({
+                        legend:{
+                            data:[bookName[i],bookName[i-1]],
+                        },
+                        series: [{
+                            name:bookName[i],
+                            type: 'bar',
+                            seriesLayoutBy: 'row',
+                            encode: {
+                                // Map the "amount" column to X axis.
+                                x: bookName[i],
+                                // Map the "product" column to Y axis
+                                y: 'book'
+                            },
+                            itemStyle:{
+                                color:'#A64B00'
+                            }
+                        },{
+                            name:bookName[i-1],
+                            type: 'bar',
+                            seriesLayoutBy: 'row',
+                            encode: {
+                                // Map the "amount" column to X axis.
+                                x: bookName[i-1],
+                                // Map the "product" column to Y axis
+                                y: 'book'
+                            },
+                            itemStyle:{
+                                color:'#FFB273'
+                            }
+                        },
+                        {
+                            type:'graph',
+                            data:getGraphNode(itemName,itemValue,i),
+                            layout:'circular',
+                            top:'50%',
+                            height:'35%',
+                            width:'80%',
+                            coordinateSystem:null,
+                            label:{
+                                show:'true',
+                                // position: 'top',
+                            }
+
+                        }
+                        ]
+                    });
+                }else{
+                    option3.options.push({
+                        legend:{
+                            data:[bookName[i],bookName[bookName.length-1]],
+                        },
+                        series: [{
+                            name:bookName[i],
+                            type: 'bar',
+                            seriesLayoutBy: 'row',
+                            encode: {
+                                // Map the "amount" column to X axis.
+                                x: bookName[i],
+                                // Map the "product" column to Y axis
+                                y: 'book'
+                            },
+                            itemStyle:{
+                                color:'#A64B00'
+                            }
+                        },
+                            {
+                                name:bookName[bookName.length-1],
+                                type: 'bar',
+                                seriesLayoutBy: 'row',
+                                encode: {
+                                    // Map the "amount" column to X axis.
+                                    x: bookName[bookName.length-1],
+                                    // Map the "product" column to Y axis
+                                    y: 'book'
+                                },
+                                itemStyle:{
+                                    color:'#FFB273'
+                                }
+                            },
+                            {
+                                type:'graph',
+                                data:getGraphNode(itemName,itemValue,i),
+                                layout:'circular',
+                                top:'50%',
+                                height:'35%',
+                                width:'80%',
+                                coordinateSystem:null,
+                                label:{
+                                    show:'true',
+                                    // position: 'top',
+                                }
+
+                            }
+                        ]
+                    });
+                }
+
+
+            }
+        }
+        setDerivationData(bookName);
+        presDerivationChart.setOption(option3);
+
+        let option4={
+            baseOption:{
+                title:{
+                    text:'${presName}药味特征图',
+                    left:'center',
+                },
+                tooltip: {
+                    formatter:'出现次数:{c}',
+                    textStyle:{
+                        fontSize:18,
+                    }
+                },
+                visualMap: {
+                    orient: 'horizontal',
+                    left: 'center',
+                    min: 0,
+                    max: getMax(compFrequency),
+                    splitNumber:4,
+                    // Map the score column to color
+                    color: ['#990000','#996600','#999900','#99CC00']
+                    // inRange: {
+                    //     colorLightness: [0, 1]
+                    // }
+                },
+                series: [ {
+                    type: 'wordCloud',
+                    gridSize:8,
+                    sizeRange: [20, 80],
+                    rotationRange: [-45, 90],
+                    shape: 'pentagon',
+                    width:'80%',
+                    height:'80%',
+                    drawOutOfBound: false,
+                    textStyle: {
+                        normal: {
+                            color: function () {
+                                return 'rgb(' + [
+                                    Math.round(Math.random() * 160),
+                                    Math.round(Math.random() * 160),
+                                    Math.round(Math.random() * 160)
+                                ].join(',') + ')';
+                            }
+                        },
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowColor: '#999',
+                            textBorderColor:'#fff',
+                            textBorderWidth:5
+                        }
+                    },
+                    data: compFrequency
+                } ]
+            },
+            media:[{
+                query:{
+                    minWidth:960
+                },
+                option:{
+                    title:{
+
+                        top:'7%'
+
+                    },
+                    visualMap:{
+                        top:'15%',
+                        itemWidth:20
+                    },
+                    series: [ {
+                        type: 'wordCloud',
+                        sizeRange: [20, 100],
+                        width:'80%',
+                        height:'80%',
+                    } ]
+                }
+            },{
+                query:{
+                    maxWidth:960
+                },
+                option:{
+                    title:{
+
+                        top:'2%'
+
+                    },
+                    visualMap:{
+                        top:'12%',
+                        itemWidth:10
+                    },
+                    series: [ {
+                        type: 'wordCloud',
+                        sizeRange: [12, 50],
+                        width:'80%',
+                        height:'70%',
+                    }]
+                }
+            }]
+        };
+
+        compWordCloud.setOption(option4);
+
+        let option5={
+            baseOption: {
+                title: {
+                    text: '方剂组成关系图',
+                    top: 'top',
+                    left: 'center'
+                },
+                tooltip: {
+                    // alwaysShowContent:true,
+                    backgroundColor: '#222',
+                    borderColor: '#777',
+                    borderWidth: 1,
+                    triggerOn: "click",
+                    enterable: true,
+
+                },
+                animationDuration: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [
+                    {
+                        type: 'graph',
+                        data: graphData.nodes,
+                        links: graphData.links,
+                        layout: 'circular',
+                        focusNodeAdjacency: true,
+                        coordinateSystem: null,
+                        itemStyle: {
+                            borderColor: '#fff',
+                            borderWidth: 1,
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.3)'
+                        },
+                        label: {
+                            show: 'true',
+                            fontStyle: 'oblique',
+                            align: 'left',
+                            formatter: function (params) {
+                                let str = params.name.slice(0, 5);
+                                if (params.name.length > 5)
+                                    str += '...'
+                                return str;
+                            }
+                        },
+                        lineStyle: {
+                            color: 'source',
+                            curveness: 0.3
+                        },
+                        emphasis: {
+                            lineStyle: {
+                                width: 10
+                            },
+                            label: {
+                                formatter: function (params) {
+                                    let str = insertStr(params.name, "\n", 8, 8)
+                                    return str;
+                                },
+                            }
+                        },
+                        height: '75%'
+                    }
+                ]
+            },
+            media:[
+                {
+                    query:{
+                        minWidth:960
+                    },
+                    option:{
+                        tooltip: {
+                            // alwaysShowContent:true,
+                            padding: 10,
+                            formatter: function (obj) {
+                                let html = '';
+                                if (obj.dataType == 'node') {
+                                    let index = obj.dataIndex
+                                    let ind = graphData.indications;
+                                    for (let j = 0; j < ind[index].length; j++) {
+                                        html += '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 18px;padding-bottom: 7px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:400px">'
+                                            + '出典' + '：' + ind[index][j].bookName
+                                            + '</div>'
+                                            + '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 12px;padding-bottom: 3px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:400px">'
+                                            + '适应症' + '：' + ind[index][j].indication
+                                            + '</div>';
+                                    }
+
+                                } else if (obj.dataType == 'edge') {
+                                    html += '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 12px;padding-bottom: 3px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:300px">'
+                                        + '成分差异：';
+                                    let source = obj.data.source.split(' ');
+                                    let target = obj.data.target.split(' ');
+                                    let len1 = target.length;
+                                    let len2 = source.length;
+                                    for (let i = 0; i < len1; i++) {
+                                        if (!source.includes(target[i])) {
+                                            html += target[i] + ' ';
+                                        }
+                                    }
+                                    for (let i = 0; i < len2; i++) {
+                                        if (!target.includes(source[i])) {
+                                            html += source[i] + ' ';
+                                        }
+                                    }
+                                    html += '</div>';
+                                }
+                                return html;
+                            }
+                        },
+                        series:[
+                            {
+                                label: {
+                                    position: 'right',
+                                    fontSize:12
+                                },
+                                emphasis: {
+                                    label: {
+                                        fontSize: 15
+                                    }
+                                },
+                                width:'80%'
+                            },
+
+                        ]
+                    }
+
+                },
+                {
+                    query:{
+                        maxWidth:960
+                    }  ,
+                    option:{
+                        tooltip: {
+                            // alwaysShowContent:true,
+                            padding: 10,
+                            formatter: function (obj) {
+                                let html = '';
+                                if (obj.dataType == 'node') {
+                                    let index = obj.dataIndex
+                                    let ind = graphData.indications;
+                                    for (let j = 0; j < ind[index].length; j++) {
+                                        html += '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 12px;padding-bottom: 7px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:14rem">'
+                                            + '出典' + '：' + ind[index][j].bookName
+                                            + '</div>'
+                                            + '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 8px;padding-bottom: 3px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:14rem">'
+                                            + '适应症' + '：' + ind[index][j].indication
+                                            + '</div>';
+                                    }
+
+                                } else if (obj.dataType == 'edge') {
+                                    html += '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 8px;padding-bottom: 3px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:10rem">'
+                                        + '成分差异：';
+                                    let source = obj.data.source.split(' ');
+                                    let target = obj.data.target.split(' ');
+                                    let len = target.length
+                                    for (let i = 0; i < len; i++) {
+                                        if (!source.includes(target[i])) {
+                                            html += target[i] + ' ';
+                                        }
+                                    }
+                                    html += '</div>';
+                                }
+                                return html;
+                            }
+                        },
+                        series:[
+                            {
+                                label: {
+                                    position: ['-15%','100%'],
+                                    fontSize:8
+                                },
+                                emphasis: {
+                                    label: {
+                                        fontSize: 10
+                                    }
+                                },
+                                width:'80%'
+                            },
+
+                        ]
+                    }
+                }
+            ]
+        };
+
+        historyRelationship.setOption(option5);
+
+        let option6={
+            baseOption:{
+                title:{
+                  text:'${presName}药味特征图',
+                  left:'center'
+                },
+                tooltip: {
+                    position: 'top',
+                    formatter:function (obj) {
+                        let tip='方名:'+obj.data[1]+'<br>'+
+                                '成分名:'+obj.data[0]+'<br>'+
+                                '含量:'+obj.data[2]+'g<br>'
+                        return tip;
+                    }
+                },
+                animation: false,
+                grid: {
+
+                },
+                xAxis: {
+                    type: 'category',
+                    data: itemName,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: bookName,
+                    splitArea: {
+                        show: true
+                    }
+
+                },
+                visualMap: {
+                    min: 0,
+                    max: getMaxData(myData),
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '15%'
+                },
+                series: [{
+                    name: '${presName}组成热点图',
+                    type: 'heatmap',
+                    data: getHeatMapData(bookName,itemName,itemValue),
+                    label: {
+                        show: true,
+                        color:'#000'
+                    },
+                    itemStyle:{
+                        borderColor:'#000'
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)',
+                            borderColor:'none'
+                        }
+                    }
+                }]
+            },
+            media:[{
+                query:{
+                    minWidth:960
+                },
+                option:{
+                    xAxis:{
+                        axisLabel:{
+                            fontSize:12
+                        }
+                    },
+                    yAxis:{
+                        axisLabel:{
+                            fontSize:12,
+                            formatter:function (params) {
+                                return params;
+                            }
+                        }
+                    },
+                    grid: {
+                        height: '60%',
+                        top: '10%',
+                        left:'15%'
+                    },
+                    series:[{
+                        name: '${presName}组成热点图',
+                        label:{
+                            fontSize:12
+                        }
+                    }]
+                }
+            },{
+                query:{
+                    maxWidth:960
+                },
+                option:{
+                    xAxis:{
+                        axisLabel:{
+                            fontSize:10
+                        }
+                    },
+                    yAxis:{
+                        axisLabel:{
+                            fontSize:10,
+                            formatter:function (params) {
+                                let newParamsName = ''
+                                let paramsNameNumber = params.length
+                                let provideNumber = 5
+                                let rowNumber = Math.ceil(paramsNameNumber / provideNumber)
+                                for (let row = 0; row < rowNumber; row++) {
+                                    newParamsName +=
+                                        params.substring(
+                                            row * provideNumber,
+                                            (row + 1) * provideNumber
+                                        ) + '\n'
+                                }
+                                return newParamsName
+                            }
+                        }
+
+                    },
+                    grid: {
+                        height: '60%',
+                        top: '10%',
+                        left:'12%'
+                    },
+                    series:[{
+                        name: '${presName}组成热点图',
+                        label:{
+                            fontSize:8
+                        }
+                    }]
+                }
+            }]
+        }
+        // compHeatMap.setOption(option6);
+        let option7={
+            baseOption:{
+                title:{
+                    text:'${presName}衍化树',
+                    left:'center'
+                },
+                tooltip:{
+                    trigger: 'item',
+                    triggerOn: 'mousemove',
+                },
+                timeline:{
+                    axisType:'category',
+                    autoPlay:true,
+                    loop:true,
+                    data:treeData.ages
+                },
+                series:[{
+                    type:'tree',
+                    name:'${presName}衍化树',
+                    layout:'orthogonal',
+                    symbol:'emptyCircle',
+                    symbolSize:10,
+                    edgeShape:'curve',
+                    initialTreeDepth:1,
+                    data:[treeData.data],
+                    roam:true,
+                    tooltip:{
+                        position:'right',
+                    },
+                    label:{
+                        show:true,
+                        fontWeight:'bold'
+                    },
+                    animation:true,
+                    animationDuration:1000
+
+                }]
+            },
+            media:[{
+                query:{
+                    maxWidth:960
+                },
+                option:{
+                    title:{
+                        textStyle:{
+                            fontSize:15
+                        }
+                    },
+                    timeline: {
+                        bottom:'5%'
+                    },
+                    series:[{
+                        name:'${presName}衍化树',
+                        orient:'TB',
+                        bottom:'20%',
+                        label:{
+                            fontSize:8,
+                            position: 'left',
+                            rotate:0,
+                            formatter:function (params) {
+                                let tip=insertStr(params.name,'\n',0,1)
+                                tip=tip.replace('《','');
+                                tip=tip.replace('》','');
+                                return tip;
+                            }
+                        },
+                        tooltip:{
+                            formatter:function (params) {
+                                let name=params.name;
+                                console.log(params);
+                                let i=bookName.indexOf(name);
+                                if(params.dataIndex==1){
+                                    return '方名：'+name;
+                                }
+                                let html =
+                                    '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 1.2rem;padding-bottom: 3px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:15rem">'
+                                    + '方名' + '：' + name+'<br>'
+                                    + '主治' + '：' + indications[i]
+                                    + '</div>';
+                                return html;
+                            }
+                        }
+                    }]
+                }
+            },{
+                query:{
+                    minWidth:960
+                },
+                option:{
+                    title:{
+                        textStyle:{
+                            fontSize:18
+                        }
+                    },
+                    timeline:{
+                        bottom:'15%'
+                    },
+                    series:[{
+                        name:'${presName}衍化树',
+                        orient:'LR',
+                        bottom:'25%',
+                        label:{
+                            fontSize:12,
+                            position: 'right',
+                            rotate:45,
+                            formatter:function (params) {
+                                return params.name;
+                            }
+
+                        },
+                        tooltip:{
+                            formatter:function (params) {
+                                let name=params.name;
+                                let i=bookName.indexOf(name);
+                                if(params.dataIndex==1){
+                                    return '方名：'+name;
+                                }
+                                let html =
+                                    '<div style="border-bottom: 1px solid rgba(255,255,255,.3); font-size: 1.2rem;padding-bottom: 3px;margin-bottom: 7px;word-break: break-all;word-wrap: break-word;white-space:pre-wrap;width:35rem">'
+                                    + '主治' + '：' + indications[i]
+                                    + '</div>';
+                                return html;
+                            }
+                        }
+                    }]
+                }
+            }],
+            options:[]
+        }
+
+        presDerivationTree.setOption(option7);
+        presDerivationTree.on('timelinechanged',function (obj) {
+            this.setOption({
+                series:[{
+                    name:'${presName}衍化树',
+                    initialTreeDepth:obj.currentIndex+1
+                }]
+            })
+        })
+
+
+        myChart.on('legendselectchanged', function(obj) {
+            let selected = obj.selected;
+            let legend = obj.name;
+
+            // 使用 legendToggleSelect Action 会重新触发 legendselectchanged Event，导致本函数重复运行
+            // 使得 无 selected 对象
+            if (selected != undefined) {
+                let data=getCompChartData(legend,myData);
+                // console.log(data);
+                showCompCharts(data,compChart);
+                if (isFirstUnSelect(selected)) {
+                    triggerAction('legendToggleSelect', selected,myChart);
+
+                } else if (isAllUnSelected(selected)) {
+                    triggerAction('legendSelect', selected,myChart);
+                    $(".main_center").stop().slideUp();
+
+                }
+
+            }
+
+        });
+
+
+    });
+
+
+
+</script>
+</body>
+</html>

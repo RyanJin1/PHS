@@ -1,0 +1,288 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+html{
+    font-size:62.5%;
+}
+.top{
+    width: 100%;
+    height: 14rem;
+}
+.top .welcome_text{
+    width: 100%;
+    height: 4rem;
+    line-height: 4rem;
+    background: rgba(0,0,0,0.1);
+    font-size: 1.3rem;
+    position: relative;
+}
+.welcome_text span{
+    color: rgba(63, 63, 63, 0.93);
+    position: absolute;
+    left:6rem;
+}
+
+.top .nav{
+    width: 100%;
+    height: 10rem;
+    position: relative;
+    line-height: 10rem;
+    border-bottom: 0.1rem solid #cccccc;
+    box-shadow: 0 1px 3px #cccccc;
+}
+.nav .title{
+    font-family: 华文楷体;
+    font-size: 3rem;
+    position: absolute;
+    left: 6rem;
+}
+.nav .login_btn{
+    text-decoration: none;
+    position: absolute;
+    font-size: 1.2rem;
+    right: 45rem;
+}
+
+.nav .search{
+    position: absolute;
+    text-align: center;
+    right: 3rem;
+    top: 3.5rem;
+}
+
+.search input{
+    width: 30rem;
+    height: 3rem;
+    font-size: 1.2rem;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.search button{
+    width: 10rem;
+    height: 3rem;
+    font-size: 1.2rem;
+    display: inline-block;
+    vertical-align: top;
+}
+
+#main{
+    width: 100%;
+    height: 60rem;
+    /*background: red;*/
+}
+#visual_box{
+    width: 70%;
+    height: auto;
+    box-shadow: 1px 0px 3px #cccccc;
+    float:left
+}
+
+#button_group{
+    width: 100%;
+    height: 4rem;
+    text-align: left;
+    margin-left: 1rem;
+    padding: 1.5rem;
+}
+
+#button_group .toggle_button{
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 2px solid #cccccc;
+    margin-left: .5rem;
+    margin-top: .5rem;
+    border-radius: 6px;
+    background: #fff;
+    outline: none;
+}
+
+
+
+#button_group .toggle_button:hover{
+    border: .3rem solid #707070;
+    box-shadow: .1rem .1rem .2rem #cccccc;
+}
+
+#button_group .toggle_button:active{
+    box-shadow: none
+}
+
+
+#button_group .active{
+    border: .3rem solid #707070;
+}
+
+#button_group .toggle_button img{
+    width: 2rem;
+    height: 2rem;
+}
+.visual_module{
+    width: 100%;
+    margin-top: 4rem;
+}
+#graph_module {
+
+}
+#parallel_module {
+    /*background: #000;*/
+}
+
+#tool_box{
+    width: 30%;
+    height: auto;
+    float:left;
+}
+
+#filter_box{
+    width: 97%;
+    height: 10rem;
+    border: 1px solid #ccc;
+    border-radius: 11px;
+    background: rgba(218, 247, 166, 0.8);
+    box-shadow: 1px 1px 3px #3c3c3c inset;
+    margin-left: .8rem;
+    margin-top: 1rem;
+    padding-right: 4rem;
+    position: relative;
+}
+
+#filter_box span{
+    color : #000000;
+    position: relative;
+    top : .3rem;
+    left : .7rem;
+    font-size : 1.5em;
+
+}
+#node_filter{
+    position : absolute;
+    left: 7rem;
+    top : -0.05rem
+;
+}
+.filter_input{
+    width: 8rem;
+}
+
+.filter {
+    float : right;
+    margin-top: .5rem;
+}
+
+.filter_item{
+    margin-top: .5rem;
+    text-align: right;
+
+}
+
+#filter_tip{
+    display: inline-block;
+    border: 1px solid #5c5c5c;
+    border-radius: 3px;
+    width: 2rem;
+    height: 2rem;
+    background: #ccc;
+    line-height: 2rem;
+    text-align: center;
+    cursor: pointer;
+    margin-top: .5rem;
+
+
+}
+
+#filter_tip:hover{
+    box-shadow: 1px 1px 1px #3c3c3c inset;
+}
+
+
+
+#tip_content{
+    width: 25rem;
+    height: auto;
+    position: relative;
+    background: #cccccc;
+    border: 1px solid #ccc;
+    box-shadow: 1px 1px 3px #3c3c3c inset;
+    left: 1rem;
+    top: -.1rem;
+    display: none;
+    border-radius: 10px;
+}
+
+#tip_content p {
+   padding: 1rem;
+    font-size: 1.2em;
+    white-space: nowrap;
+
+}
+
+#filter_box button{
+    outline : none;
+    border-radius: 6px;
+    border: 1px solid #cccccc;
+}
+
+#filter_box button:active{
+
+    border: 1px solid #000;
+}
+#filter_handler{
+    width: 8rem;
+    position:absolute;
+    bottom: 1.1rem;
+    right : 3.8rem
+
+
+}
+
+#reset_filter{
+    width: 3.5rem;
+    position: absolute;
+    bottom: 1.1rem;
+    right : 12.3rem
+}
+
+.detail_box{
+    width: 97%;
+    height: auto;
+    /*background: #000;*/
+    margin-top: 1rem;
+    margin-left: .8rem;
+    box-shadow: 1px 1px 3px #3c3c3c inset;
+    border-radius: 11px;
+    text-align: center;
+    padding-bottom: 1.5rem;
+}
+
+
+.detail_box svg{
+    margin-top: 1rem;
+    margin-left: 1.2rem;
+}
+
+.detail_info {
+    text-align: left;
+    list-style: none;
+    width: 95%;
+    margin-left: 1.5rem;
+}
+
+.detail_info li{
+    margin-top: 1rem;
+    border-bottom: 1px solid #cccccc;
+    padding : 0.5rem 0.2rem;
+    box-shadow: 0 .2rem .5rem #cccccc inset;
+}
+
+.detail_info li span{
+    font-weight: bold;
+}
+
+
+
+
+
+
+

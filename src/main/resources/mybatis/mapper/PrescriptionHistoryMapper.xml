@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jyc.prescriptionhistory.mapper.PrescriptionHistoryMapper">
+<!--    public List<PrescriptionHistory> getPrescriptionHistory();-->
+        <select id="getPrescriptionHistory" resultMap="ph">
+            SELECT history_id,plant_id FROM prescriptionhistory a
+	            LEFT JOIN prescription_components b ON a.pres_id=b.pres_id
+        </select>
+        <select id="getPrescriptionHistoryByName" resultMap="presHistoryByName">
+                SELECT a.history_id,book_name,plant_name,content
+                FROM prescription_history_components a,prescriptionhistory b,prescription_components c,prescription d
+                WHERE d.pres_name=#{presName}
+                AND d.pres_id=b.pres_id
+                AND a.history_id=b.history_id
+                AND a.plant_id =c.plant_id
+        </select>
+        <select id="getPrescriptionHistoryByPresId" resultMap="historyManageInfo">
+                SELECT b.history_id,b.book_name,b.use_way,b.effects,b.indication,age,pres_name,plant_name,content
+                FROM prescription_history_components a,prescriptionhistory b,prescription_components c,prescription d
+                WHERE d.pres_id=#{presId}
+                AND d.pres_id=b.pres_id
+                AND a.history_id=b.history_id
+                AND a.plant_id =c.plant_id
+        </select>
+        <select id="getPrescriptionHistoryInfo" resultType="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            SELECT a.* FROM prescriptionhistory a,prescription b WHERE pres_name=#{presName} AND a.pres_id=b.pres_id
+        </select>
+        <select id="getAllPrescriptionHistoryInfo" resultMap="historyManageInfo">
+            SELECT b.history_id,b.book_name,b.use_way,b.effects,b.indication,pres_name,plant_name,content
+                FROM prescription_history_components a,prescriptionhistory b,prescription_components c,prescription d
+                WHERE d.pres_id=b.pres_id
+                AND a.history_id=b.history_id
+                AND a.plant_id =c.plant_id
+        </select>
+        <insert id="addPrescriptionHistory" useGeneratedKeys="true" keyProperty="historyId">
+            INSERT INTO prescriptionhistory(book_name,use_way,effects,pres_id,indication,age) VALUES (#{bookName},#{useWay},#{effects},#{presId},#{indication},#{age});
+        </insert>
+        <select id="getPrescriptionId" resultType="integer">
+            SELECT pres_id FROM prescriptionhistory WHERE history_id=#{historyId}
+        </select>
+        <select id="getPrescriptionHistoryInfoByPresName" resultMap="historyInfoByPresName">
+            SELECT b.history_id,b.book_name,b.indication,plant_name,content
+                FROM prescription_history_components a,prescriptionhistory b,prescription_components c,prescription d
+                WHERE d.pres_id=b.pres_id
+                AND a.history_id=b.history_id
+                AND a.plant_id =c.plant_id
+                AND content!=0
+                AND pres_name=#{presName}
+        </select>
+        <select id="getHistoriesByName" resultMap="historyInfo">
+            SELECT b.*,plant_name,content
+             FROM prescription_history_components a,prescriptionhistory b,prescription_components c,prescription d
+                WHERE d.pres_id=b.pres_id
+                AND a.history_id=b.history_id
+                AND a.plant_id =c.plant_id
+                AND content!=0
+                AND pres_name=#{presName}
+        </select>
+        <delete id="delPrescriptionHistory">
+            DELETE FROM prescriptionhistory WHERE history_id=#{historyId}
+        </delete>
+        <update id="updatePrescriptionHistory">
+            UPDATE prescriptionhistory SET book_name=#{bookName},use_way=#{useWay},effects=#{effects},indication=#{indication},age=#{age} WHERE history_id=#{historyId}
+        </update>
+        <update id="updateHistoryCompsDescription">
+            UPDATE prescriptionhistory SET components=#{description} WHERE history_id=#{historyId}
+        </update>
+        <insert id="addHistoryBatch" useGeneratedKeys="true" keyProperty="historyId">
+            INERT INTO prescriptionhistory(book_name,use_way,effects,pres_id,indication)
+            VALUES
+            <foreach collection="histories" separator="," item="his">
+                (#{his.bookName},#{his.useWay},#{his.effects},#{his.presId},#{his.indication})
+            </foreach>
+        </insert>
+        <select id="getHistoryIdByPresId" resultType="integer">
+            SELECT history_id FROM prescriptionhistory WHERE pres_id=#{presId}
+        </select>
+        <select id="getAllHistoryHaveAge" resultType="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            SELECT pres_name,book_name,age
+		    FROM prescriptionhistory a,prescription b
+		    WHERE a.pres_id=b.pres_id
+        </select>
+        <select id="getHistoryAgeByPresName" resultType="string">
+            SELECT age
+		    FROM prescriptionhistory a,prescription b
+		    WHERE a.pres_id=b.pres_id AND pres_name=#{presName}
+        </select>
+        <select id="getHistoryNumByAgeAndPresName" resultType="com.jyc.prescriptionhistory.bean.HistoryRecords">
+           SELECT pres_name,age,count(*) count FROM prescriptionhistory a,prescription b WHERE a.pres_id=b.pres_id GROUP BY a.pres_id,age
+        </select>
+        <select id="getBooksByAgeAndPresName" resultType="string">
+            SELECT book_name FROM prescriptionhistory WHERE age=#{age} AND pres_id in(
+	            SELECT pres_id FROM prescription WHERE pres_name=#{presName})
+        </select>
+
+
+
+<!--    private Integer historyId;-->
+<!--    private String bookName;-->
+<!--    private String usage;-->
+<!--    private String effects;-->
+<!--    private Integer presId;-->
+<!--    private String indication;-->
+<!--    private List<HistoryComponents> hc;-->
+        <resultMap id="ph" type="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            <id property="historyId" column="history_id"></id>
+            <collection property="hc" ofType="com.jyc.prescriptionhistory.bean.HistoryComponents">
+                <id property="plantId" column="plant_id"></id>
+            </collection>
+        </resultMap>
+        <resultMap id="presHistoryByName" type="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            <id property="historyId" column="history_id"></id>
+            <result property="bookName" column="book_name"></result>
+            <collection property="hc" ofType="com.jyc.prescriptionhistory.bean.HistoryComponents">
+                <id property="id" column="id"></id>
+                <result property="plantName" column="plant_name"></result>
+                <result property="content" column="content"></result>
+            </collection>
+        </resultMap>
+        <resultMap id="historyManageInfo" type="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            <id property="historyId" column="history_id"></id>
+            <result property="bookName" column="book_name"></result>
+            <result property="useWay" column="use_way"></result>
+            <result property="effects" column="effects"></result>
+            <result property="indication" column="indication"></result>
+            <result property="presName" column="pres_name"></result>
+            <result property="age" column="age"></result>
+            <collection property="hc" ofType="com.jyc.prescriptionhistory.bean.HistoryComponents">
+                <id property="id" column="id"></id>
+                <result property="plantName" column="plant_name"></result>
+                <result property="content" column="content"></result>
+            </collection>
+        </resultMap>
+        <resultMap id="historyInfoByPresName" type="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            <id property="historyId" column="history_id"></id>
+            <result property="bookName" column="book_name"></result>
+            <result property="indication" column="indication"></result>
+            <collection property="hc" ofType="com.jyc.prescriptionhistory.bean.HistoryComponents">
+                <id property="id" column="id"></id>
+                <result property="plantName" column="plant_name"></result>
+                <result property="content" column="content"></result>
+            </collection>
+        </resultMap>
+        <resultMap id="historyInfo" type="com.jyc.prescriptionhistory.bean.PrescriptionHistory">
+            <id property="historyId" column="history_id"></id>
+            <result property="bookName" column="book_name"></result>
+            <result property="useWay" column="use_way"></result>
+            <result property="effects" column="effects"></result>
+            <result property="presId" column="pres_id"></result>
+            <result property="indication" column="indication"></result>
+            <result property="age" column="age"></result>
+            <collection property="hc" ofType="com.jyc.prescriptionhistory.bean.HistoryComponents">
+                <id property="id" column="id"></id>
+                <result property="plantName" column="plant_name"></result>
+                <result property="content" column="content"></result>
+            </collection>
+        </resultMap>
+</mapper>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jyc.prescriptionhistory.mapper.UserMapper">
+    <select id="getUser" resultType="com.jyc.prescriptionhistory.bean.User">
+        SELECT * FROM user WHERE user_name=#{uName} AND user_password=#{uPwd}
+    </select>
+</mapper>

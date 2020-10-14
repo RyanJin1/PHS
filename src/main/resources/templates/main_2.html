@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>中药方剂历史可视化</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/main_2.css">
+    <script src="/js/jquery-1.12.4.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/echarts.min.js"></script>
+    <script src="/js/d3.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/graph.js"></script>
+    <script src="/js/animation.js"></script>
+    <script src="/js/handler.js"></script>
+
+</head>
+<body>
+    <div id="app">
+        <div class="top">
+            <div class="welcome_text">
+                <span>您好，欢迎来到中药方剂历史衍化可视化平台</span>
+            </div>
+            <div class="nav">
+                <span class="title">方剂历史衍化信息平台</span>
+                <a href="javascript:;" class="login_btn" data-toggle="modal" data-target="#login">登录</a>
+                <div class="search">
+                    <form action="/prescription">
+                        <input class="form-control" type="search" required name="keywords" placeholder="请输入方剂名称、成分名称或适用症">
+                        <button class="btn btn-primary" type="submit">查询</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="main">
+            <div id="visual_box">
+                <div id="button_group">
+                    <button class="toggle_button active" id="graph_button">
+                        <img src="/fonts/graph.svg" class="inactive_img" style="display: none" alt="graph">
+                        <img src="/fonts/graph-active.svg" class="active_img" alt="graph">
+                    </button>
+                    <button class="toggle_button" id="parallel_button">
+                        <img src="/fonts/parallel.svg" class="inactive_img" alt="parallel">
+                        <img src="/fonts/parallel-active.svg" class="active_img" style="display: none" alt="parallel">
+                    </button>
+                </div>
+                <svg id="graph_module" class="visual_module" width="1080" height="900"></svg>
+                <svg id="parallel_module" class="visual_module" width="1080" height="900" style="display: none"></svg>
+            </div>
+            <div id="tool_box">
+                <div id="filter_box">
+                    <span id="filter_tip">?</span>
+                    <span>filter:</span>
+                    <div id="link_filter" class="filter">
+                        <div class="filter_item">
+                            <label for="link_filter">similarity:</label>
+                            <input type="text" id="link_filter_input" class="filter_input" maxlength="15">
+                        </div>
+                    </div>
+                    <div id="node_filter" class="filter">
+                        <div class="filter_item">
+                            <label for="link_filter">age:</label>
+                            <input type="text" id="age_filter_input" class="filter_input" maxlength="15">
+                        </div>
+                        <div class="filter_item">
+                            <label for="link_filter">indication:</label>
+                            <input type="text" id="ind_filter_input" class="filter_input" maxlength="15">
+                        </div>
+                        <div class="filter_item">
+                            <label for="link_filter">component:</label>
+                            <input type="text" id="comp_filter_input" class="filter_input" maxlength="15">
+                        </div>
+                    </div>
+                    <button id="filter_handler" onclick="filterHandler()">search</button>
+                    <button id="reset_filter" onclick="resetFilter()">reset</button>
+                    <div id="tip_content">
+                        <p>
+                            节点过滤:<br/>
+                            age: 显示键入年代之前的节点<br/>
+                            indication: 显示包含关键词适应症的节点<br/>
+                            component: 显示包含用户输入药味的节点<br/>
+                            边过滤:<br/>
+                            显示高于用户键入相似度的边<br/>
+                            所有条件若不输入则默认显示所有节点或边
+                        </p>
+                    </div>
+
+                </div>
+                <div class="detail_box">
+                    <h3>方剂详细信息</h3>
+                    <svg class="comp_pie" width="420" height="250"></svg>
+                    <svg class="comp_bar" width="420" height="320"></svg>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script type="text/javascript">
+        const svg = d3.select('#graph_module');
+        const width = +svg.attr('width');
+        console.log(width);
+        const height = +svg.attr('height');
+        const margin = { left: 60 , top: 50 , right: 60 , bottom: 50 }
+        const innerHeight = height - margin.top - margin.bottom;
+        const innerWidth = width - margin.left - margin.right;
+        let zoom; // 缩放
+        let aDuration = 1000;
+
+        let textScale; //文字随图元大小
+        let lines,circles,texts //图元
+        let legend; //图例
+        let nodeGroups;
+        let simulation //力导图设置
+
+        let g = svg.append('g')
+        .attr('id','graph_group')
+        .attr('transform','translate('+margin.left+','+margin.top+')');
+
+        //get key from url
+        function getKeyPresName() {
+            let presName = "${keyName}";
+            console.log(presName);
+            return presName;
+        }
+        let presName = getKeyPresName();
+        //request data
+        let rawData = getVisualData(presName);
+        //process data
+        let proData = processData(rawData);
+        const nodes = proData.nodes; //记录最初的数据节点
+        const links = proData.links; //记录最初的边
+        let updateNodes = nodes;
+        let updateLinks = links;
+        //get all age
+        let allAges = Array.from(new Set(nodes.map( pd => pd.age)));
+        let filteredAges = allAges;
+        allAges.reverse();
+        //set color scheme
+        let colorScheme = setColor(allAges,d3.interpolateGreens);
+        let color = d3.scaleOrdinal(colorScheme);
+        const fill = d => {
+            return color(d.age)
+        }
+
+        render();//initial render of graph
+        setSimulation();// set Simulation
+
+
+        let filter_function = 0;
+        let paraVis;
+
+        handleFilterTip();//set filter tips
+        $('#graph_button').click(function () {
+            toggleViewHandler($(this));
+        });
+        $('#parallel_button').click(function () {
+            toggleViewHandler($(this));
+        })
+
+    </script>
+</body>
+</html>

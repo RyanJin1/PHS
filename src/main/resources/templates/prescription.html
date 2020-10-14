@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>方剂管理</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/webjars/bootstrap-table/1.15.5/bootstrap-table.css">
+    <link rel="stylesheet" href="/bootstrap-fileinput/css/fileinput.css">
+    <link rel="stylesheet" href="/bootstrap-fileinput/themes/explorer-fa/theme.css">
+    <link rel="stylesheet" href="/css/prescription.css">
+    <script src="/js/jquery-1.12.4.js"></script>
+    <script src="/webjars/popper.js/1.13.0/dist/umd/popper.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/webjars/jquery-confirm/2.7.0/jquery.confirm.js"></script>
+    <script src="/bootstrap-fileinput/js/fileinput.js"></script>
+    <script src="/bootstrap-fileinput/js/locales/zh.js"></script>
+    <script src="/bootstrap-fileinput/themes/explorer-fa/theme.js"></script>
+    <script src="/webjars/bootstrap-table/1.15.5/bootstrap-table.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            let $table=$("#manage_table");
+            let $addBtn=$(".add");
+            let $delBtn=$(".del");
+            $delBtn.click(function () {
+                let del=$table.bootstrapTable('getAllSelections');
+                if(del.length!=0){
+                    $.confirm({
+                        text: "请确认是否删除选择的方剂信息？",
+                        confirm: function(button) {
+                            delPrescription(del);
+                        },
+                        cancel: function(button) {
+                            alert("删除操作已取消");
+                        }
+                    });
+                }
+            });
+
+            function delPrescription(del){
+
+                console.log(del);
+                $.ajax({
+                    url:'/prescriptions',
+                    type:'DELETE',
+                    contentType:'application/json',
+                    data:JSON.stringify(del),
+                    success: function(res) {
+                        alert("删除成功");
+                        $("#manage_table").bootstrapTable('refresh');
+                    }
+                })
+            }
+            $addBtn.click(function () {
+                $("#addPrescription").modal({
+                    keyboard:false
+                });
+            });
+            $table.bootstrapTable({
+                url:'/prescriptions',
+                toolbar:'#toolbar',
+                toolbarAlign: 'left',
+                pagination:true,
+                clickToSelect:true,
+                clickEdit:true,
+                pageSize:20,
+                pageList:[10,15,20],
+                // pagination:true,
+                search:true,
+                columns: [{
+                    checkbox: true,
+                },
+                    {
+                        field:'presId',
+                        visible:false
+                    },
+                    {
+                        field: 'presName',
+                        title: '方剂名称',
+                        halign:'center',
+                        align:'center',
+                        width:100
+                    },
+                    {
+                        field: 'pinYin',
+                        title: ' 拼音',
+                        halign:'center',
+                        align:'center',
+                        width:150
+                    },
+                    {
+                        field: 'useWay',
+                        title: '用法',
+                        halign:'center',
+                        width:200
+                    },
+                    {
+                        field: 'effects',
+                        title: '功效',
+                        halign:'center',
+                        width:100
+                    },
+                    {
+                        field:'description',
+                        title:'描述',
+                        halign:'center',
+                        width:250
+                    },
+                    {
+                        field: 'indications',
+                        title: '适应症',
+                        halign:'center',
+                        width:250
+                    },
+                    {
+                        field: 'history',
+                        title: '历史',
+                        halign:'center',
+                        align:'center',
+                        formatter:function (value, row, index) {
+                            return '<a href="/prescriptionHistory/'+row.presId+'?presName='+row.presName+'" class="editHistory">编辑历史信息</a>';
+                        },
+                        width:100
+                    }
+                ],
+                uniqueId:'presId',
+                onClickCell: function(field, value, row, $element) {
+                    if(field!='history'){
+                        $element.attr('contenteditable', true);
+                        let preValue=$element.html();
+                        $element.blur(function() {
+                            let index = $element.parent().data('index');
+                            let tdValue = $element.html();
+                            if(preValue!=tdValue){
+                                $.confirm({
+                                    text: "请确认是否修改方剂信息？",
+                                    confirm: function(button) {
+                                        saveData(index, field, tdValue,row);
+                                    },
+                                    cancel: function(button) {
+                                        alert("修改操作已取消");
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+            function saveData(index, field, value,row) {
+                $table.bootstrapTable('updateCell', {
+                    index: index,       //行索引
+                    field: field,       //列名
+                    value: value        //cell值
+                });
+                let updatePrescription=getUpdatePrescription(row);
+                $.ajax({
+                    url:'/prescription/'+updatePrescription.presId,
+                    type:'PUT',
+                    contentType:'application/json',
+                    data:JSON.stringify(updatePrescription),
+                    success: function(res) {
+                        $("#manage_table").bootstrapTable('refresh');
+                    }
+                });
+
+
+            }
+
+            function getUpdatePrescription(row){
+                let up={
+                    presId:row.presId,
+                    presName:row.presName,
+                    pinYin:row.pinYin,
+                    useWay:row.useWay,
+                    effects:row.effects,
+                    description:row.description,
+                    indications:row.indications
+                }
+                return up;
+            }
+
+            //添加方剂
+            $("#addPrescription_btn").click(function () {
+                if(notNull()){
+                    $.confirm({
+                        text: "请确认是否添加方剂信息？",
+                        confirm: function(button) {
+                            addPrescription();
+                        },
+                        cancel: function(button) {
+                            alert("添加操作已取消");
+                        }
+                    });
+                }
+            });
+
+            function addPrescription() {
+                let p=getNewPrescriptionInfo();
+                console.log(JSON.stringify(p));
+                $.ajax({
+                    url:'/prescription',
+                    type:'POST',
+                    contentType:'application/json',
+                    data:JSON.stringify(p),
+                    success: function(res) {
+                        alert("添加成功");
+                        $("#manage_table").bootstrapTable('refresh');
+                        $("#addPrescription").modal('hide');
+                    }
+                });
+            }
+
+            function getNewPrescriptionInfo() {
+                let name=$("#add_presName").val();
+                let pinYin=$("#add_pinYin").val();
+                let useWay=$("#add_useWay").val();
+                let effects=$("#add_effects").val();
+                let indications=$("#add_indications").val();
+                let description=$("#add_description").val();
+
+                let prescription= {
+                    presName: name,
+                    pinYin: pinYin,
+                    useWay: useWay,
+                    effects: effects,
+                    indications: indications,
+                    description:description
+                }
+                return prescription;
+            }
+
+            $(".close").click(function () {
+                $("#add_presName").val("");
+                $("#add_pinYin").val("");
+                $("#add_useWay").val("");
+                $("#add_effects").val("");
+                $("#add_indications").val("");
+                $("#add_description").val("");
+            });
+
+            $("#excel_file").fileinput({
+                language: 'zh',
+                themes:'explorer-fa',
+                maxFileSize: 10240,
+                maxFileCount: 1,             //输入文件数量最大为1
+                allowedFileExtensions: ["xls", "xlsx"],
+                initialPreviewAsData: true,
+                minFileCount: 1,    //最小上传文件数： 1
+                uploadUrl: '/upload',    //未设置此属性，输入框为一条形控件；设置后，出现文件拖拽区域。
+                maxFilePreviewSize: 10240,
+                uploadAsync: true,
+
+
+            });
+
+            $("#excel_file").on("fileuploaded", function (event, data, previewId, index) {
+                // console.log(data);
+
+            });
+
+            //校验添加信息不能为空
+            function notNull() {
+                let flag=true;
+                $(".tip").remove();
+                $(".notNull").each(function () {
+                    if($(this).val()==''){
+                        let type=$(this).attr('placeholder');
+                        let html='<p style="color: red" class="tip">'+type+'不能为空</p>';
+                        $(this).after(html);
+                        flag=false;
+                    }
+                });
+                return flag;
+            }
+
+
+
+
+        })
+    </script>
+</head>
+<body>
+<div class="top">
+    <div class="welcome_text">
+        <a href="logout" id="logout">&lt;退出</a>
+        <span>${Session.loginUser}，欢迎来到中药方剂信息管理平台</span>
+    </div>
+    <div class="nav">
+        <span class="title">方剂历史衍化信息平台</span>
+    </div>
+</div>
+<div class="manage">
+    <div id="toolbar">
+        <a href="javascript:;" class="add">+</a>
+        <a href="javascript:;" class="del">-</a>
+        <button class="btn btn-light" data-toggle="modal" data-target="#upload">批量导入</button>
+    </div>
+    <table id="manage_table" style="table-layout:fixed;word-break:break-all;word-wrap: break-word"></table>
+</div>
+<div class="modal fade" id="addPrescription" tabindex="-1" role="dialog" aria-labelledby="添加方剂" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="addModalLabel">
+                    添加方剂
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" class="close">
+                    &times;
+                </button>
+            </div>
+            <div class="modal-body addPrescription_main">
+                <input type="text" id="add_presName" class="form-control notNull" placeholder="方剂名">
+                <input type="text" id="add_pinYin" class="form-control" placeholder="拼音">
+                <textarea id="add_useWay" class="form-control" placeholder="用法"></textarea>
+                <textarea id="add_effects" class="form-control" placeholder="功效"></textarea>
+                <textarea id="add_indications" class="form-control notNull" placeholder="适应症"></textarea>
+                <textarea id="add_description" class="form-control notNull" placeholder="描述"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="addPrescription_btn">
+                    添加
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+<div class="modal fade" id="upload" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">请选择Excel文件</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="file" name="excel_file" id="excel_file" class="file-loading" multiple accept=".xls,.xlsx"/>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
